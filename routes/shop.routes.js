@@ -12,7 +12,7 @@ import { allowRoles } from "../middlewares/role.middleware.js";
 const router = express.Router();
 
 router.post("/upload", verifyJWT, isAdmin, upload.single("file"), uploadShops);
-router.get("/get-shops", verifyJWT, getShops);
+router.get("/get-shops", getShops);
 router.post(
   "/assign-shops",
   verifyJWT,

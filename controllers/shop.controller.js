@@ -50,26 +50,53 @@ export const getShops = async (req, res) => {
   }
 };
 
-export const assignShopsToAuditor = async (req, res) => {
+export const getShopById = async (req, res) => {
   try {
-    const { auditorId, shopIds } = req.body;
+    const { id } = req.params;
+    console.log("req.params:", req.params);
+    console.log("req.query:", req.query);
+    const shop = await shopModel.findById(id);
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+    res.status(200).json({
+      message: "Shop fetched successfully",
+      data: shop,
+    });
+  } catch (error) {
+    console.error("Error fetching shop:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching shop", error: error.message });
+  }
+};
 
-    if (!auditorId || !shopIds || !shopIds.length) {
+export const assignShopsToAuditors = async (req, res) => {
+  try {
+    const { auditorIds, shopIds } = req.body; // now accepts multiple auditors
+
+    if (!auditorIds?.length || !shopIds?.length) {
+      return res.status(400).json({
+        message: "auditorIds (array) and shopIds (array) are required",
+      });
+    }
+
+    // Validate auditors
+    const auditors = await userModel.find({
+      _id: { $in: auditorIds },
+      role: "auditor",
+    });
+
+    if (auditors.length !== auditorIds.length) {
       return res
         .status(400)
-        .json({ message: "auditorId and shopIds are required" });
+        .json({ message: "One or more auditor IDs are invalid" });
     }
 
-    // Check if user is auditor
-    const auditor = await userModel.findById(auditorId);
-    if (!auditor || auditor.role !== "auditor") {
-      return res.status(400).json({ message: "Invalid auditor" });
-    }
-
-    // Assign shops
+    // Assign shops (push new auditors without duplicates)
     const result = await shopModel.updateMany(
       { _id: { $in: shopIds } },
-      { $set: { assignedTo: auditorId } }
+      { $addToSet: { assignedTo: { $each: auditorIds } } } // prevents duplicates
     );
 
     res.status(200).json({
@@ -78,6 +105,26 @@ export const assignShopsToAuditor = async (req, res) => {
     });
   } catch (error) {
     console.error("Error assigning shops:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getShopsByAuditor = async (req, res) => {
+  try {
+    const { auditorId } = req.params;
+
+    if (!auditorId) {
+      return res.status(400).json({ message: "auditorId is required" });
+    }
+
+    const shops = await shopModel.find({ assignedTo: auditorId });
+
+    res.status(200).json({
+      count: shops.length,
+      shops,
+    });
+  } catch (error) {
+    console.error("Error fetching shops by auditor:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -69,3 +69,19 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 };
+
+export const getAllAuditors = async (req, res) => {
+  try {
+    const auditors = await User.find({ role: "auditor" }).select(
+      "_id username role"
+    ); // select only needed fields
+
+    res.status(200).json({
+      count: auditors.length,
+      auditors,
+    });
+  } catch (error) {
+    console.error("Error fetching auditors:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

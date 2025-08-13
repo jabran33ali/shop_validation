@@ -16,7 +16,12 @@ const app = express();
 const corsOptions = {
   origin: ["http://localhost:3000"], // your frontend URL
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Accept",
+    "ngrok-skip-browser-warning",
+  ],
   credentials: true, // if you send cookies or auth headers
 };
 

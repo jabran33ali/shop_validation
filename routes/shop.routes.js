@@ -2,10 +2,11 @@
 import express from "express";
 import { isAdmin, verifyJWT } from "../middlewares/auth.middleware.js";
 import {
-  assignShopsToAuditors,
+  assignShopsToAuditor,
   getShopById,
   getShops,
   uploadShops,
+  uploadVisitPictures,
 } from "../controllers/shop.controller.js";
 import { upload } from "../middlewares/upload.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
@@ -19,7 +20,9 @@ router.post(
   "/assign-shops",
   verifyJWT,
   allowRoles("admin", "manager", "supervisor", "executive"),
-  assignShopsToAuditors
+  assignShopsToAuditor
 );
+
+router.post("/visit", upload.array("pictures", 5), uploadVisitPictures);
 
 export default router;

@@ -29,9 +29,11 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// app.use("/", (req, res) => {
-//   res.send("Welcome to the API");
-// });
 app.use("/api/users", userRoutes);
 app.use("/api/shops", shopRoutes); // Assuming you have a shopRoutes file
+
+app.use("/", (req, res) => {
+  res.send("Welcome to the API");
+});
+
 export default app;

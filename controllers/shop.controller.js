@@ -71,32 +71,42 @@ export const getShopById = async (req, res) => {
   }
 };
 
-export const assignShopsToAuditors = async (req, res) => {
+export const assignShopsToAuditor = async (req, res) => {
   try {
-    const { auditorIds, shopIds } = req.body; // now accepts multiple auditors
+    const { auditorId, shopIds } = req.body;
 
-    if (!auditorIds?.length || !shopIds?.length) {
+    if (!auditorId || !shopIds?.length) {
       return res.status(400).json({
-        message: "auditorIds (array) and shopIds (array) are required",
+        message: "auditorId (string) and shopIds (array) are required",
       });
     }
 
-    // Validate auditors
-    const auditors = await userModel.find({
-      _id: { $in: auditorIds },
+    // Validate auditor
+    const auditor = await userModel.findOne({
+      _id: auditorId,
       role: "auditor",
     });
-
-    if (auditors.length !== auditorIds.length) {
-      return res
-        .status(400)
-        .json({ message: "One or more auditor IDs are invalid" });
+    if (!auditor) {
+      return res.status(400).json({ message: "Invalid auditor" });
     }
 
-    // Assign shops (push new auditors without duplicates)
+    // Find shops that are already assigned
+    const alreadyAssigned = await shopModel.find({
+      _id: { $in: shopIds },
+      assignedTo: { $ne: null }, // shop already has an auditor
+    });
+
+    if (alreadyAssigned.length > 0) {
+      return res.status(400).json({
+        message: "Some shops are already assigned to another auditor",
+        alreadyAssigned: alreadyAssigned.map((shop) => shop._id),
+      });
+    }
+
+    // Assign shops that are free
     const result = await shopModel.updateMany(
-      { _id: { $in: shopIds } },
-      { $addToSet: { assignedTo: { $each: auditorIds } } } // prevents duplicates
+      { _id: { $in: shopIds }, assignedTo: null },
+      { $set: { assignedTo: auditorId } }
     );
 
     res.status(200).json({
@@ -125,6 +135,46 @@ export const getShopsByAuditor = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching shops by auditor:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Auditor visit upload controller
+export const uploadVisitPictures = async (req, res) => {
+  try {
+    const { shopId, auditorId } = req.body;
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No pictures uploaded" });
+    }
+
+    const imagePaths = req.files.map((file) => `/uploads/${file.filename}`);
+
+    const shop = await shopModel.findById(shopId);
+
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    if (shop.assignedTo.toString() !== auditorId) {
+      return res
+        .status(403)
+        .json({ message: "This shop is not assigned to you" });
+    }
+
+    shop.visit = true;
+    shop.visitImages.push(...imagePaths);
+    shop.visitedBy = auditorId;
+    shop.visitedAt = new Date();
+
+    await shop.save();
+
+    res.status(200).json({
+      message: "Visit recorded successfully",
+      shop,
+    });
+  } catch (error) {
+    console.error("Error uploading visit pictures:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

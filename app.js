@@ -28,6 +28,8 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
+// Serve uploads folder as static
+app.use("/uploads", express.static("uploads"));
 
 app.use("/api/users", userRoutes);
 app.use("/api/shops", shopRoutes); // Assuming you have a shopRoutes file

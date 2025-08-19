@@ -5,11 +5,13 @@ import {
   assignShopsToAuditor,
   getShopById,
   getShops,
+  resetAllVisits,
   uploadShops,
   uploadVisitPictures,
 } from "../controllers/shop.controller.js";
 import { upload } from "../middlewares/upload.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
+import { uploadVisitImages } from "../utils/multer.js";
 
 const router = express.Router();
 
@@ -23,6 +25,8 @@ router.post(
   assignShopsToAuditor
 );
 
-router.post("/visit", upload.array("pictures", 5), uploadVisitPictures);
+router.post("/visit", uploadVisitImages, uploadVisitPictures);
+
+router.delete("/reset-visits", resetAllVisits);
 
 export default router;

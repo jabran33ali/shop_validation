@@ -12,7 +12,8 @@ const shopSchema = new mongoose.Schema(
     },
     visitImages: [
       {
-        type: String, // store uploaded image URL or filename
+        shopImage: { type: String },
+        shelfImage: { type: String },
       },
     ],
     visitedBy: {
@@ -24,7 +25,7 @@ const shopSchema = new mongoose.Schema(
     },
   },
   { strict: false, timestamps: true }
-); // accept any fields
+);
 
 const Shop = mongoose.model("Shop", shopSchema);
 export default Shop;

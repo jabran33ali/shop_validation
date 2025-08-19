@@ -140,15 +140,54 @@ export const getShopsByAuditor = async (req, res) => {
 };
 
 // Auditor visit upload controller
+// export const uploadVisitPictures = async (req, res) => {
+//   try {
+//     const { shopId, auditorId } = req.body;
+
+//     if (!req.files || req.files.length === 0) {
+//       return res.status(400).json({ message: "No pictures uploaded" });
+//     }
+
+//     const imagePaths = req.files.map((file) => `/uploads/${file.filename}`);
+
+//     const shop = await shopModel.findById(shopId);
+
+//     if (!shop) {
+//       return res.status(404).json({ message: "Shop not found" });
+//     }
+
+//     if (shop.assignedTo.toString() !== auditorId) {
+//       return res
+//         .status(403)
+//         .json({ message: "This shop is not assigned to you" });
+//     }
+
+//     shop.visit = true;
+//     shop.visitImages.push(...imagePaths);
+//     shop.visitedBy = auditorId;
+//     shop.visitedAt = new Date();
+
+//     await shop.save();
+
+//     res.status(200).json({
+//       message: "Visit recorded successfully",
+//       shop,
+//     });
+//   } catch (error) {
+//     console.error("Error uploading visit pictures:", error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
 export const uploadVisitPictures = async (req, res) => {
   try {
     const { shopId, auditorId } = req.body;
 
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "No pictures uploaded" });
+    if (!req.files || !req.files.shopImage || !req.files.shelfImage) {
+      return res
+        .status(400)
+        .json({ message: "Both shop and shelf images are required" });
     }
-
-    const imagePaths = req.files.map((file) => `/uploads/${file.filename}`);
 
     const shop = await shopModel.findById(shopId);
 
@@ -162,8 +201,12 @@ export const uploadVisitPictures = async (req, res) => {
         .json({ message: "This shop is not assigned to you" });
     }
 
+    // ✅ Push images into the array instead of replacing
     shop.visit = true;
-    shop.visitImages.push(...imagePaths);
+    shop.visitImages.push({
+      shopImage: `/uploads/${req.files.shopImage[0].filename}`,
+      shelfImage: `/uploads/${req.files.shelfImage[0].filename}`,
+    });
     shop.visitedBy = auditorId;
     shop.visitedAt = new Date();
 
@@ -175,6 +218,32 @@ export const uploadVisitPictures = async (req, res) => {
     });
   } catch (error) {
     console.error("Error uploading visit pictures:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const resetAllVisits = async (req, res) => {
+  try {
+    const result = await shopModel.updateMany(
+      {}, // match all shops
+      {
+        $set: {
+          visit: false,
+          visitImages: [], // clear array
+        },
+        $unset: {
+          visitedBy: "",
+          visitedAt: "",
+        },
+      }
+    );
+
+    res.status(200).json({
+      message: "All visits reset successfully",
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error("Error resetting visits:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

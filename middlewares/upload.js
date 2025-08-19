@@ -2,41 +2,33 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-// Create uploads directory if not exists
-const uploadDir = "uploads";
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+// Ensure uploads/excel folder exists
+const excelUploadPath = "uploads/excel";
+if (!fs.existsSync(excelUploadPath)) {
+  fs.mkdirSync(excelUploadPath, { recursive: true });
 }
 
-// Multer Storage Config
+// Storage setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir); // save in /uploads
+    cb(null, excelUploadPath);
   },
   filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueName + path.extname(file.originalname));
+    cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`);
   },
 });
 
-// File Filter (optional - allow only images)
+// File filter (only Excel allowed)
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif/;
-  const extName = allowedTypes.test(
-    path.extname(file.originalname).toLowerCase()
-  );
-  const mimeType = allowedTypes.test(file.mimetype);
-
-  if (extName && mimeType) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only images are allowed"));
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (ext !== ".xlsx" && ext !== ".xls") {
+    return cb(new Error("Only Excel files are allowed"), false);
   }
+  cb(null, true);
 };
 
-// Upload Utility
 export const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }, // max 5MB
+  limits: { fileSize: 10 * 1024 * 1024 }, // 5MB max
 });

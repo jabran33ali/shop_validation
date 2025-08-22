@@ -3,6 +3,8 @@ import {
   registerUser,
   loginUser,
   getAllAuditors,
+  getAllUsers,
+  updateUserById,
 } from "../controllers/user.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
@@ -25,10 +27,19 @@ router.get(
   getAllAuditors
 );
 
+router.get("/get-all-users", protect, allowRoles("admin"), getAllUsers);
+
 router.get(
   "/get-assigned-shops-for-auditor/:auditorId",
   protect,
   getShopsByAuditor
+);
+
+router.put(
+  "/update-user/:id",
+  protect,
+  allowRoles("admin", "manager", "supervisor", "executive"),
+  updateUserById
 );
 
 export default router;

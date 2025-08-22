@@ -50,11 +50,27 @@ export const getShops = async (req, res) => {
   }
 };
 
+export const getVisitedShops = async (req, res) => {
+  const { auditorId } = req.query;
+  try {
+    const shops = await shopModel.find({ auditorId, visit: true });
+
+    res.status(200).json({
+      message: "Shops fetched successfully",
+      count: shops.length,
+      data: shops,
+    });
+  } catch (error) {
+    console.error("Error fetching shops:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching shops", error: error.message });
+  }
+};
+
 export const getShopById = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("req.params:", req.params);
-    console.log("req.query:", req.query);
     const shop = await shopModel.findById(id);
     if (!shop) {
       return res.status(404).json({ message: "Shop not found" });

@@ -14,7 +14,10 @@ const app = express();
 
 // CORS configuration
 const corsOptions = {
-  origin: ["http://localhost:3000"], // your frontend URL
+  origin: [
+    "http://localhost:3000",
+    "https://shop-validation-dashboard.vercel.app",
+  ], // your frontend URL
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: [
     "Content-Type",

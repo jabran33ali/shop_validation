@@ -5,6 +5,7 @@ import {
   assignShopsToAuditor,
   getShopById,
   getShops,
+  getVisitedShops,
   resetAllVisits,
   uploadShops,
   uploadVisitPictures,
@@ -17,6 +18,7 @@ const router = express.Router();
 
 router.post("/upload", verifyJWT, isAdmin, upload.single("file"), uploadShops);
 router.get("/get-shops", verifyJWT, getShops);
+router.get("/get-visited-shops", verifyJWT, getVisitedShops);
 router.get("/get-shop/:id", verifyJWT, getShopById);
 router.post(
   "/assign-shops",

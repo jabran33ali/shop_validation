@@ -5,7 +5,10 @@ import {
   assignShopsToAuditor,
   getShopById,
   getShops,
+  getVisitCounts,
   getVisitedShops,
+  recordPhotoCLickLocation,
+  recordStartAuditLocation,
   resetAllVisits,
   uploadShops,
   uploadVisitPictures,
@@ -27,8 +30,12 @@ router.post(
   assignShopsToAuditor
 );
 
-router.post("/visit", uploadVisitImages, uploadVisitPictures);
+router.post("/start-audit-location", verifyJWT, recordStartAuditLocation);
+router.post("/photoclick-location", verifyJWT, recordPhotoCLickLocation);
+router.post("/visit", verifyJWT, uploadVisitImages, uploadVisitPictures);
 
 router.delete("/reset-visits", resetAllVisits);
+
+router.get("/get-visit-stats", verifyJWT, getVisitCounts);
 
 export default router;

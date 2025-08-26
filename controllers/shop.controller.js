@@ -35,7 +35,21 @@ export const uploadShops = async (req, res) => {
 
 export const getShops = async (req, res) => {
   try {
-    const shops = await shopModel.find();
+    // optional query param ?unassigned=true
+    const { unassigned } = req.query;
+
+    let filter = {};
+
+    if (unassigned === "true") {
+      filter = {
+        $or: [
+          { assignedTo: { $exists: false } }, // key doesn't exist
+          { assignedTo: null }, // key exists but value is null
+        ],
+      };
+    }
+
+    const shops = await shopModel.find(filter);
 
     res.status(200).json({
       message: "Shops fetched successfully",
@@ -195,9 +209,51 @@ export const getShopsByAuditor = async (req, res) => {
 //   }
 // };
 
+export const recordStartAuditLocation = async (req, res) => {
+  try {
+    const { shopId, latitude, longitude } = req.body;
+
+    const shop = await shopModel.findById(shopId);
+    if (!shop) return res.status(404).json({ message: "Shop not found" });
+
+    shop.visitLocation.startAudit = {
+      latitude,
+      longitude,
+      timestamp: new Date(),
+    };
+
+    await shop.save();
+    res.status(200).json({ message: "Photo click location saved", data: shop });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const recordPhotoCLickLocation = async (req, res) => {
+  try {
+    const { shopId, latitude, longitude } = req.body;
+
+    const shop = await shopModel.findById(shopId);
+    if (!shop) return res.status(404).json({ message: "Shop not found" });
+
+    shop.visitLocation.photoClick = {
+      latitude,
+      longitude,
+      timestamp: new Date(),
+    };
+
+    await shop.save();
+    res
+      .status(200)
+      .json({ message: "Proceed click location saved", data: shop });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 export const uploadVisitPictures = async (req, res) => {
   try {
-    const { shopId, auditorId } = req.body;
+    const { shopId, auditorId, latitude, longitude } = req.body;
 
     if (!req.files || !req.files.shopImage || !req.files.shelfImage) {
       return res
@@ -219,6 +275,11 @@ export const uploadVisitPictures = async (req, res) => {
 
     // ✅ Push images into the array instead of replacing
     shop.visit = true;
+    shop.visitLocation.completed = {
+      latitude,
+      longitude,
+      timestamp: new Date(),
+    };
     shop.visitImages.push({
       shopImage: `/uploads/${req.files.shopImage[0].filename}`,
       shelfImage: `/uploads/${req.files.shelfImage[0].filename}`,
@@ -260,6 +321,48 @@ export const resetAllVisits = async (req, res) => {
     });
   } catch (error) {
     console.error("Error resetting visits:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getVisitCounts = async (req, res) => {
+  try {
+    const { id } = req.query; // pass id in params
+
+    let visitedCount;
+    let notVisitedCount;
+    let total;
+
+    if (id) {
+      // ✅ filter only shops assigned to this auditor
+      visitedCount = await shopModel.countDocuments({
+        assignedTo: id,
+        visit: true,
+      });
+
+      notVisitedCount = await shopModel.countDocuments({
+        assignedTo: id,
+        visit: false,
+      });
+
+      total = visitedCount + notVisitedCount;
+    } else {
+      // ✅ global counts if no id is passed
+      visitedCount = await shopModel.countDocuments({ visit: true });
+      notVisitedCount = await shopModel.countDocuments({ visit: false });
+      total = visitedCount + notVisitedCount;
+    }
+
+    res.status(200).json({
+      message: id
+        ? "Visit counts for auditor fetched successfully"
+        : "Global visit counts fetched successfully",
+      visited: visitedCount,
+      notVisited: notVisitedCount,
+      total,
+    });
+  } catch (error) {
+    console.error("Error fetching visit counts:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

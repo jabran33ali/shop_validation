@@ -1,9 +1,8 @@
-// controllers/user.controller.js
 import User from "../models/user.model.js";
 import { generateToken } from "../utils/generateToken.js";
 
 export const registerUser = async (req, res) => {
-  const { name, username, email, password, role } = req.body;
+  const { name, username, password, role } = req.body;
 
   const creatorRole = req.user?.role || "admin"; // In case of initial admin-create
 
@@ -23,7 +22,7 @@ export const registerUser = async (req, res) => {
   if (userExists)
     return res.status(400).json({ message: "Username already taken" });
 
-  const user = await User.create({ name, username, email, password, role });
+  const user = await User.create({ name, username, password, role });
   res.status(201).json({
     _id: user._id,
     name: user.name,
@@ -103,12 +102,12 @@ export const getAllUsers = async (req, res) => {
 export const updateUserById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, username, email, role } = req.body;
+    const { name, username, password, role } = req.body;
 
     // Find user and update
     const user = await User.findByIdAndUpdate(
       id,
-      { name, username, email, role },
+      { name, username, password, role },
       { new: true }
     );
 

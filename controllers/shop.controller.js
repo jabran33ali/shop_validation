@@ -275,7 +275,7 @@ export const uploadVisitPictures = async (req, res) => {
 
     // ✅ Push images into the array instead of replacing
     shop.visit = true;
-    shop.visitLocation.completed = {
+    shop.visitLocation.proceedClick = {
       latitude,
       longitude,
       timestamp: new Date(),

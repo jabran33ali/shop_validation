@@ -14,6 +14,23 @@ const shopSchema = new mongoose.Schema(
       {
         shopImage: { type: String },
         shelfImage: { type: String },
+        visitLocation: {
+          startAudit: {
+            latitude: { type: Number },
+            longitude: { type: Number },
+            timestamp: { type: Date },
+          },
+          photoClick: {
+            latitude: { type: Number },
+            longitude: { type: Number },
+            timestamp: { type: Date },
+          },
+          proceedClick: {
+            latitude: { type: Number },
+            longitude: { type: Number },
+            timestamp: { type: Date },
+          },
+        },
       },
     ],
     visitedBy: {
@@ -22,23 +39,6 @@ const shopSchema = new mongoose.Schema(
     },
     visitedAt: {
       type: Date,
-    },
-    visitLocation: {
-      startAudit: {
-        latitude: { type: Number },
-        longitude: { type: Number },
-        timestamp: { type: Date },
-      },
-      photoClick: {
-        latitude: { type: Number },
-        longitude: { type: Number },
-        timestamp: { type: Date },
-      },
-      proceedClick: {
-        latitude: { type: Number },
-        longitude: { type: Number },
-        timestamp: { type: Date },
-      },
     },
   },
   { strict: false, timestamps: true }

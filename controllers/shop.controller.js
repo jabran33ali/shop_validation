@@ -107,7 +107,7 @@ export const assignShopsToAuditor = async (req, res) => {
 
     if (!auditorId || !shopIds?.length) {
       return res.status(400).json({
-        message: "auditorId (string) and shopIds (array) are required",
+        message: "auditorId  and shopIds  are required",
       });
     }
 
@@ -216,14 +216,22 @@ export const recordStartAuditLocation = async (req, res) => {
     const shop = await shopModel.findById(shopId);
     if (!shop) return res.status(404).json({ message: "Shop not found" });
 
-    shop.visitLocation.startAudit = {
-      latitude,
-      longitude,
-      timestamp: new Date(),
-    };
+    // Create a new visit entry in visitImages
+    shop.visitImages.push({
+      visitLocation: {
+        startAudit: {
+          latitude,
+          longitude,
+          timestamp: new Date(),
+        },
+      },
+    });
 
     await shop.save();
-    res.status(200).json({ message: "Photo click location saved", data: shop });
+    res.status(200).json({
+      message: "Photo click location saved",
+      data: shop.visitImages[shop.visitImages.length - 1], // return the new visit object
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -236,7 +244,13 @@ export const recordPhotoCLickLocation = async (req, res) => {
     const shop = await shopModel.findById(shopId);
     if (!shop) return res.status(404).json({ message: "Shop not found" });
 
-    shop.visitLocation.photoClick = {
+    if (shop.visitImages.length === 0) {
+      return res.status(400).json({ message: "No audit started yet" });
+    }
+
+    // Get last visitImage
+    const lastVisit = shop.visitImages[shop.visitImages.length - 1];
+    lastVisit.visitLocation.photoClick = {
       latitude,
       longitude,
       timestamp: new Date(),
@@ -245,7 +259,7 @@ export const recordPhotoCLickLocation = async (req, res) => {
     await shop.save();
     res
       .status(200)
-      .json({ message: "Proceed click location saved", data: shop });
+      .json({ message: "Proceed location saved", data: lastVisit });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -262,10 +276,7 @@ export const uploadVisitPictures = async (req, res) => {
     }
 
     const shop = await shopModel.findById(shopId);
-
-    if (!shop) {
-      return res.status(404).json({ message: "Shop not found" });
-    }
+    if (!shop) return res.status(404).json({ message: "Shop not found" });
 
     if (shop.assignedTo.toString() !== auditorId) {
       return res
@@ -273,29 +284,33 @@ export const uploadVisitPictures = async (req, res) => {
         .json({ message: "This shop is not assigned to you" });
     }
 
-    // ✅ Push images into the array instead of replacing
-    shop.visit = true;
-    shop.visitLocation.proceedClick = {
+    if (shop.visitImages.length === 0) {
+      return res.status(400).json({ message: "No audit started yet" });
+    }
+
+    // Get last visitImage
+    const lastVisit = shop.visitImages[shop.visitImages.length - 1];
+    lastVisit.shopImage = `/uploads/${req.files.shopImage[0].filename}`;
+    lastVisit.shelfImage = `/uploads/${req.files.shelfImage[0].filename}`;
+    lastVisit.visitLocation.proceedClick = {
       latitude,
       longitude,
       timestamp: new Date(),
     };
-    shop.visitImages.push({
-      shopImage: `/uploads/${req.files.shopImage[0].filename}`,
-      shelfImage: `/uploads/${req.files.shelfImage[0].filename}`,
-    });
+
+    shop.visit = true;
     shop.visitedBy = auditorId;
     shop.visitedAt = new Date();
 
     await shop.save();
 
     res.status(200).json({
-      message: "Visit recorded successfully",
-      shop,
+      message: "Visit completed successfully",
+      data: lastVisit,
     });
   } catch (error) {
     console.error("Error uploading visit pictures:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 

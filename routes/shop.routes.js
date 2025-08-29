@@ -2,7 +2,7 @@
 import express from "express";
 import { isAdmin, verifyJWT } from "../middlewares/auth.middleware.js";
 import {
-  assignShopsToAuditor,
+  assignShops,
   getShopById,
   getShops,
   getVisitCounts,
@@ -27,7 +27,7 @@ router.post(
   "/assign-shops",
   verifyJWT,
   allowRoles("admin", "manager", "supervisor", "executive"),
-  assignShopsToAuditor
+  assignShops
 );
 
 router.post("/start-audit-location", verifyJWT, recordStartAuditLocation);

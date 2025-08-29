@@ -7,11 +7,12 @@ export const registerUser = async (req, res) => {
   const creatorRole = req.user?.role || "admin"; // In case of initial admin-create
 
   const roleHierarchy = {
-    admin: ["admin", "manager", "supervisor", "executive", "auditor"],
-    manager: ["supervisor", "executive", "auditor"],
-    supervisor: ["executive", "auditor"],
-    executive: ["auditor"],
-    user: [],
+    admin: ["admin", "manager", "supervisor", "executive", "auditor", "qc"],
+    manager: ["supervisor", "executive", "auditor", "qc"],
+    supervisor: ["executive", "auditor", "qc"],
+    executive: ["auditor", "qc"],
+    auditor: [],
+    qc: [],
   };
 
   if (!roleHierarchy[creatorRole].includes(role)) {
@@ -71,16 +72,16 @@ export const loginUser = async (req, res) => {
 
 export const getAllAuditors = async (req, res) => {
   try {
-    const auditors = await User.find({ role: "auditor" }).select(
+    const users = await User.find({ role: { $in: ["auditor", "qc"] } }).select(
       "_id username role"
-    ); // select only needed fields
+    ); // only return what you need
 
     res.status(200).json({
-      count: auditors.length,
-      auditors,
+      count: users.length,
+      users,
     });
   } catch (error) {
-    console.error("Error fetching auditors:", error);
+    console.error("Error fetching auditors and QCs:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -350,8 +350,8 @@ export const uploadVisitPictures = async (req, res) => {
     lastVisit.shopImage = `/uploads/${req.files.shopImage[0].filename}`;
     lastVisit.shelfImage = `/uploads/${req.files.shelfImage[0].filename}`;
     lastVisit.visitLocation.proceedClick = {
-      latitude,
-      longitude,
+      latitude: latitude ? Number(latitude) : null,
+      longitude: longitude ? Number(longitude) : null,
       timestamp: new Date(),
     };
 

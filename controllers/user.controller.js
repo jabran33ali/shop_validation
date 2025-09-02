@@ -70,18 +70,27 @@ export const loginUser = async (req, res) => {
   }
 };
 
-export const getAllAuditors = async (req, res) => {
+export const getAllAssignies = async (req, res) => {
   try {
-    const users = await User.find({ role: { $in: ["auditor", "qc"] } }).select(
-      "_id username role"
-    ); // only return what you need
+    const { role } = req.query;
+
+    let filter = {};
+    if (role) {
+      // If role is provided in query, filter by that role
+      filter.role = role;
+    } else {
+      // Otherwise fetch both auditors and qc
+      filter.role = { $in: ["auditor", "qc"] };
+    }
+
+    const users = await User.find(filter).select("_id username role");
 
     res.status(200).json({
       count: users.length,
       users,
     });
   } catch (error) {
-    console.error("Error fetching auditors and QCs:", error);
+    console.error("Error fetching users:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

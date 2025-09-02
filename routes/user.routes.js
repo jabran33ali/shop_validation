@@ -2,7 +2,7 @@ import express from "express";
 import {
   registerUser,
   loginUser,
-  getAllAuditors,
+  getAllAssignies,
   getAllUsers,
   updateUserById,
 } from "../controllers/user.controller.js";
@@ -21,10 +21,10 @@ router.post("/admin-create", registerUser);
 router.post("/register", protect, registerUser);
 
 router.get(
-  "/get-auditors",
+  "/get-assignies",
   protect,
   allowRoles("admin", "manager", "supervisor", "executive"),
-  getAllAuditors
+  getAllAssignies
 );
 
 router.get("/get-all-users", protect, allowRoles("admin"), getAllUsers);

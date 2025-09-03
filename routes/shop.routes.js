@@ -3,6 +3,7 @@ import express from "express";
 import { isAdmin, verifyJWT } from "../middlewares/auth.middleware.js";
 import {
   assignShops,
+  getPendingAndVistedShops,
   getShopById,
   getShops,
   getVisitCounts,
@@ -22,6 +23,11 @@ const router = express.Router();
 router.post("/upload", verifyJWT, isAdmin, upload.single("file"), uploadShops);
 router.get("/get-shops", verifyJWT, getShops);
 router.get("/get-visited-shops", verifyJWT, getVisitedShops);
+router.get(
+  "/get-pending-and-visted-shops",
+
+  getPendingAndVistedShops
+);
 router.get("/get-shop/:id", verifyJWT, getShopById);
 router.post(
   "/assign-shops",

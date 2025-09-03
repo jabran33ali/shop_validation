@@ -82,6 +82,24 @@ export const getVisitedShops = async (req, res) => {
   }
 };
 
+export const getPendingAndVistedShops = async (req, res) => {
+  const { visit } = req.query;
+  try {
+    const shops = await shopModel.find({ visit });
+
+    res.status(200).json({
+      message: "Shops fetched successfully",
+      count: shops.length,
+      data: shops,
+    });
+  } catch (error) {
+    console.error("Error fetching shops:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching shops", error: error.message });
+  }
+};
+
 export const getShopById = async (req, res) => {
   try {
     const { id } = req.params;

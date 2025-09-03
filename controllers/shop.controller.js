@@ -84,8 +84,12 @@ export const getVisitedShops = async (req, res) => {
 
 export const getPendingAndVistedShops = async (req, res) => {
   const { visit } = req.query;
+
   try {
-    const shops = await shopModel.find({ visit });
+    const shops = await shopModel.find({
+      visit,
+      assignedTo: { $exists: true, $ne: null }, // must exist and not be null
+    });
 
     res.status(200).json({
       message: "Shops fetched successfully",
@@ -94,9 +98,10 @@ export const getPendingAndVistedShops = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching shops:", error);
-    res
-      .status(500)
-      .json({ message: "Error fetching shops", error: error.message });
+    res.status(500).json({
+      message: "Error fetching shops",
+      error: error.message,
+    });
   }
 };
 

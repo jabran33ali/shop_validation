@@ -359,7 +359,7 @@ export const recordPhotoCLickLocation = async (req, res) => {
 
 export const uploadVisitPictures = async (req, res) => {
   try {
-    const { shopId, auditorId, latitude, longitude } = req.body;
+    const { shopId, id, latitude, longitude } = req.body;
 
     if (!req.files || !req.files.shopImage || !req.files.shelfImage) {
       return res
@@ -370,7 +370,10 @@ export const uploadVisitPictures = async (req, res) => {
     const shop = await shopModel.findById(shopId);
     if (!shop) return res.status(404).json({ message: "Shop not found" });
 
-    if (shop.assignedTo.toString() !== auditorId) {
+    if (
+      shop.assignedTo.toString() !== id ||
+      shop.assignedQc.toString() !== id
+    ) {
       return res
         .status(403)
         .json({ message: "This shop is not assigned to you" });
@@ -391,7 +394,7 @@ export const uploadVisitPictures = async (req, res) => {
     };
 
     shop.visit = true;
-    shop.visitedBy = auditorId;
+    shop.visitedBy = id;
     shop.visitedAt = new Date();
 
     await shop.save();

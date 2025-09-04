@@ -434,40 +434,64 @@ export const resetAllVisits = async (req, res) => {
 
 export const getVisitCounts = async (req, res) => {
   try {
-    const { id } = req.query; // pass id in params
-
-    let visitedCount;
-    let notVisitedCount;
-    let total;
+    const { id } = req.query; // user id
+    let visitedCount = 0;
+    let notVisitedCount = 0;
+    let total = 0;
 
     if (id) {
-      // ✅ filter only shops assigned to this auditor
-      visitedCount = await shopModel.countDocuments({
-        assignedTo: id,
-        visit: true,
-      });
+      // ✅ first get the user role
+      const user = await userModel.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
 
-      notVisitedCount = await shopModel.countDocuments({
-        assignedTo: id,
-        visit: false,
-      });
+      if (user.role === "auditor") {
+        // Auditor flow → show visited / not visited
+        visitedCount = await shopModel.countDocuments({
+          assignedTo: id,
+          visit: true,
+        });
 
-      total = visitedCount + notVisitedCount;
+        notVisitedCount = await shopModel.countDocuments({
+          assignedTo: id,
+          visit: false,
+        });
+
+        total = visitedCount + notVisitedCount;
+
+        return res.status(200).json({
+          message: "Visit counts for auditor fetched successfully",
+          visited: visitedCount,
+          notVisited: notVisitedCount,
+          total,
+        });
+      } else if (user.role === "qc") {
+        // QC flow → only assigned shops count (no visited filter)
+        total = await shopModel.countDocuments({ assignedQc: id });
+
+        return res.status(200).json({
+          message: "Assigned shops for QC fetched successfully",
+          total,
+        });
+      } else {
+        return res
+          .status(400)
+          .json({ message: "Role not supported for visit counts" });
+      }
     } else {
-      // ✅ global counts if no id is passed
+      // ✅ global counts if no id passed
       visitedCount = await shopModel.countDocuments({ visit: true });
       notVisitedCount = await shopModel.countDocuments({ visit: false });
       total = visitedCount + notVisitedCount;
-    }
 
-    res.status(200).json({
-      message: id
-        ? "Visit counts for auditor fetched successfully"
-        : "Global visit counts fetched successfully",
-      visited: visitedCount,
-      notVisited: notVisitedCount,
-      total,
-    });
+      return res.status(200).json({
+        message: "Global visit counts fetched successfully",
+        visited: visitedCount,
+        notVisited: notVisitedCount,
+        total,
+      });
+    }
   } catch (error) {
     console.error("Error fetching visit counts:", error);
     res.status(500).json({ message: "Server error" });

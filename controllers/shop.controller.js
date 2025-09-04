@@ -359,7 +359,7 @@ export const recordPhotoCLickLocation = async (req, res) => {
 
 export const uploadVisitPictures = async (req, res) => {
   try {
-    const { shopId, id, latitude, longitude } = req.body;
+    const { shopId, userId, latitude, longitude } = req.body;
 
     if (!req.files || !req.files.shopImage || !req.files.shelfImage) {
       return res
@@ -370,22 +370,35 @@ export const uploadVisitPictures = async (req, res) => {
     const shop = await shopModel.findById(shopId);
     if (!shop) return res.status(404).json({ message: "Shop not found" });
 
-    if (
-      shop.assignedTo.toString() !== id ||
-      shop.assignedQc.toString() !== id
-    ) {
-      return res
-        .status(403)
-        .json({ message: "This shop is not assigned to you" });
+    // ✅ find the user
+    const user = await userModel.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // ✅ role-based assignment check
+    if (user.role === "auditor") {
+      if (!shop.assignedTo || shop.assignedTo.toString() !== userId) {
+        return res
+          .status(403)
+          .json({ message: "This shop is not assigned to you" });
+      }
+    } else if (user.role === "qc") {
+      if (!shop.assignedQc || shop.assignedQc.toString() !== userId) {
+        return res
+          .status(403)
+          .json({ message: "This shop is not assigned to you" });
+      }
+    } else {
+      return res.status(403).json({ message: "Unauthorized role" });
     }
 
+    // Ensure an audit exists
     if (shop.visitImages.length === 0) {
       return res.status(400).json({ message: "No audit started yet" });
     }
 
-    // Get Cloudinary URLs
+    // ✅ Get last visit entry and update with Cloudinary URLs + location
     const lastVisit = shop.visitImages[shop.visitImages.length - 1];
-    lastVisit.shopImage = req.files.shopImage[0].path; // ✅ Cloudinary gives secure_url in path
+    lastVisit.shopImage = req.files.shopImage[0].path; // Cloudinary secure_url
     lastVisit.shelfImage = req.files.shelfImage[0].path;
     lastVisit.visitLocation.proceedClick = {
       latitude: latitude ? Number(latitude) : null,
@@ -394,7 +407,7 @@ export const uploadVisitPictures = async (req, res) => {
     };
 
     shop.visit = true;
-    shop.visitedBy = id;
+    shop.visitedBy = userId;
     shop.visitedAt = new Date();
 
     await shop.save();

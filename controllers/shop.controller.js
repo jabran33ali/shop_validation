@@ -231,20 +231,32 @@ export const assignShops = async (req, res) => {
 
 export const getShopsByAuditor = async (req, res) => {
   try {
-    const { auditorId } = req.params;
+    const { id } = req.params;
 
-    if (!auditorId) {
-      return res.status(400).json({ message: "auditorId is required" });
+    if (!id) {
+      return res.status(400).json({ message: "User id is required" });
     }
 
-    const shops = await shopModel.find({ assignedTo: auditorId });
+    const user = await userModel.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    let shops = [];
+    if (user.role === "auditor") {
+      shops = await shopModel.find({ assignedTo: id });
+    } else if (user.role === "qc") {
+      shops = await shopModel.find({ assignedQc: id });
+    } else {
+      return res.status(400).json({ message: "User role not supported" });
+    }
 
     res.status(200).json({
       count: shops.length,
       shops,
     });
   } catch (error) {
-    console.error("Error fetching shops by auditor:", error);
+    console.error("Error fetching shops by user:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -29,11 +29,7 @@ router.get(
 
 router.get("/get-all-users", protect, allowRoles("admin"), getAllUsers);
 
-router.get(
-  "/get-assigned-shops-for-auditor/:auditorId",
-  protect,
-  getShopsByAuditor
-);
+router.get("/get-assigned-shops-for-auditor/:id", protect, getShopsByAuditor);
 
 router.put(
   "/update-user/:id",

@@ -368,10 +368,10 @@ export const uploadVisitPictures = async (req, res) => {
       return res.status(400).json({ message: "No audit started yet" });
     }
 
-    // Get last visitImage
+    // Get Cloudinary URLs
     const lastVisit = shop.visitImages[shop.visitImages.length - 1];
-    lastVisit.shopImage = `/uploads/${req.files.shopImage[0].filename}`;
-    lastVisit.shelfImage = `/uploads/${req.files.shelfImage[0].filename}`;
+    lastVisit.shopImage = req.files.shopImage[0].path; // ✅ Cloudinary gives secure_url in path
+    lastVisit.shelfImage = req.files.shelfImage[0].path;
     lastVisit.visitLocation.proceedClick = {
       latitude: latitude ? Number(latitude) : null,
       longitude: longitude ? Number(longitude) : null,

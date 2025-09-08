@@ -415,7 +415,7 @@ export const uploadVisitPictures = async (req, res) => {
       shop.vistedByQcId = userId;
       shop.visitedAtbYQc = new Date();
     }
-
+    console.log(shop.visitByQc);
     await shop.save();
 
     res.status(200).json({

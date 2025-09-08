@@ -14,6 +14,10 @@ const shopSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    visitByQc: {
+      type: Boolean,
+      default: false,
+    },
     visitImages: [
       {
         shopImage: { type: String },
@@ -41,7 +45,14 @@ const shopSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User", // who visited
     },
+    vistedByQcId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // who visited
+    },
     visitedAt: {
+      type: Date,
+    },
+    visitedAtbYQc: {
       type: Date,
     },
   },

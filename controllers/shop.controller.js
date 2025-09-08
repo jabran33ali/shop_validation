@@ -406,14 +406,23 @@ export const uploadVisitPictures = async (req, res) => {
       timestamp: new Date(),
     };
 
-    shop.visit = true;
-    shop.visitedBy = userId;
-    shop.visitedAt = new Date();
+    if (user.role === "auditor") {
+      shop.visit = true;
+      shop.visitedBy = userId;
+      shop.visitedAt = new Date();
+    } else if (user.role === "qc") {
+      shop.visitByQc = true; // ✅ separate flag
+      shop.vistedByQcId = userId;
+      shop.visitedAtbYQc = new Date();
+    }
 
     await shop.save();
 
     res.status(200).json({
-      message: "Visit completed successfully",
+      message:
+        user.role === "auditor"
+          ? "Audit visit completed successfully"
+          : "QC visit completed successfully",
       data: lastVisit,
     });
   } catch (error) {

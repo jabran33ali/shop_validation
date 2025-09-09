@@ -47,6 +47,6 @@ router.post(
 
 router.delete("/reset-visits", resetAllVisits);
 
-router.get("/get-visit-stats", verifyJWT, getVisitCounts);
+router.get("/get-visit-stats", getVisitCounts);
 
 export default router;

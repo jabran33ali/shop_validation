@@ -124,54 +124,6 @@ export const getShopById = async (req, res) => {
   }
 };
 
-// export const assignShopsToAuditor = async (req, res) => {
-//   try {
-//     const { auditorId, shopIds } = req.body;
-
-//     if (!auditorId || !shopIds?.length) {
-//       return res.status(400).json({
-//         message: "auditorId  and shopIds  are required",
-//       });
-//     }
-
-//     // Validate auditor
-//     const auditor = await userModel.findOne({
-//       _id: auditorId,
-//       role: "auditor",
-//     });
-//     if (!auditor) {
-//       return res.status(400).json({ message: "Invalid auditor" });
-//     }
-
-//     // Find shops that are already assigned
-//     const alreadyAssigned = await shopModel.find({
-//       _id: { $in: shopIds },
-//       assignedTo: { $ne: null }, // shop already has an auditor
-//     });
-
-//     if (alreadyAssigned.length > 0) {
-//       return res.status(400).json({
-//         message: "Some shops are already assigned to another auditor",
-//         alreadyAssigned: alreadyAssigned.map((shop) => shop._id),
-//       });
-//     }
-
-//     // Assign shops that are free
-//     const result = await shopModel.updateMany(
-//       { _id: { $in: shopIds }, assignedTo: null },
-//       { $set: { assignedTo: auditorId } }
-//     );
-
-//     res.status(200).json({
-//       message: "Shops assigned successfully",
-//       modifiedCount: result.modifiedCount,
-//     });
-//   } catch (error) {
-//     console.error("Error assigning shops:", error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
-
 export const assignShops = async (req, res) => {
   try {
     const { userId, shopIds, role } = req.body;
@@ -493,8 +445,16 @@ export const getVisitCounts = async (req, res) => {
         });
       } else if (user.role === "qc") {
         // QC flow → only assigned shops count (no visited filter)
-        total = await shopModel.countDocuments({ assignedQc: id });
+        visitedCount = await shopModel.countDocuments({
+          assignedQc: id,
+          visitByQc: true,
+        });
 
+        notVisitedCount = await shopModel.countDocuments({
+          assignedQc: id,
+          visitByQc: false,
+        });
+        total = visitedCount + notVisitedCount;
         return res.status(200).json({
           message: "Assigned shops for QC fetched successfully",
           total,

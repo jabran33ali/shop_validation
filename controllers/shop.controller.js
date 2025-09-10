@@ -143,7 +143,7 @@ export const assignShops = async (req, res) => {
     let result;
 
     if (role === "auditor") {
-      // Find shops already assigned to some auditor
+      // A shop can only have one auditor
       const alreadyAssigned = await shopModel.find({
         _id: { $in: shopIds },
         assignedTo: { $ne: null },
@@ -156,19 +156,50 @@ export const assignShops = async (req, res) => {
         });
       }
 
-      // Assign auditor
       result = await shopModel.updateMany(
         { _id: { $in: shopIds }, assignedTo: null },
         { $set: { assignedTo: userId } }
       );
     } else if (role === "qc") {
-      // ✅ A shop can always have a QC assigned (independent of auditor)
+      // A shop can only have one QC
+      const alreadyAssigned = await shopModel.find({
+        _id: { $in: shopIds },
+        assignedQc: { $ne: null },
+      });
+
+      if (alreadyAssigned.length > 0) {
+        return res.status(400).json({
+          message: "Some shops are already assigned to another QC",
+          alreadyAssigned: alreadyAssigned.map((shop) => shop._id),
+        });
+      }
+
       result = await shopModel.updateMany(
-        { _id: { $in: shopIds } },
+        { _id: { $in: shopIds }, assignedQc: null },
         { $set: { assignedQc: userId } }
       );
+    } else if (role === "salesperson") {
+      // A shop can only have one salesperson
+      const alreadyAssigned = await shopModel.find({
+        _id: { $in: shopIds },
+        assignedSalesperson: { $ne: null },
+      });
+
+      if (alreadyAssigned.length > 0) {
+        return res.status(400).json({
+          message: "Some shops are already assigned to another salesperson",
+          alreadyAssigned: alreadyAssigned.map((shop) => shop._id),
+        });
+      }
+
+      result = await shopModel.updateMany(
+        { _id: { $in: shopIds }, assignedSalesperson: null },
+        { $set: { assignedSalesperson: userId } }
+      );
     } else {
-      return res.status(400).json({ message: "Role must be auditor or qc" });
+      return res
+        .status(400)
+        .json({ message: "Role must be auditor, qc, or salesperson" });
     }
 
     res.status(200).json({
@@ -366,8 +397,12 @@ export const uploadVisitPictures = async (req, res) => {
       shop.visitByQc = true; // ✅ separate flag
       shop.vistedByQcId = userId;
       shop.visitedAtbYQc = new Date();
+    } else if (user.role === "saleperson") {
+      shop.visitBySaleperson = true;
+      shop.visitedBySalespersonId = userId;
+      shop.visitedAtBySalesperson = new Date();
     }
-    console.log(shop.visitByQc);
+
     await shop.save();
 
     res.status(200).json({

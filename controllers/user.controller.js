@@ -8,7 +8,7 @@ export const registerUser = async (req, res) => {
 
   const roleHierarchy = {
     admin: ["admin", "manager", "supervisor", "executive", "auditor", "qc"],
-    manager: ["supervisor", "executive", "auditor", "qc"],
+    manager: ["saleperson"],
     supervisor: ["executive", "auditor", "qc"],
     executive: ["auditor", "qc"],
     auditor: [],

@@ -10,11 +10,19 @@ const shopSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    assignedSalesperson: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // salesperson
+    },
     visit: {
       type: Boolean,
       default: false,
     },
     visitByQc: {
+      type: Boolean,
+      default: false,
+    },
+    visitBySaleperson: {
       type: Boolean,
       default: false,
     },
@@ -49,10 +57,17 @@ const shopSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User", // who visited
     },
+    visitedBySalespersonId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // who visited
+    },
     visitedAt: {
       type: Date,
     },
     visitedAtbYQc: {
+      type: Date,
+    },
+    visitedAtBySalesperson: {
       type: Date,
     },
   },

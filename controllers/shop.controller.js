@@ -492,7 +492,9 @@ export const getVisitCounts = async (req, res) => {
         total = visitedCount + notVisitedCount;
         return res.status(200).json({
           message: "Assigned shops for QC fetched successfully",
-          total,
+          visited: visitedCount,
+          notVisited: notVisitedCount,
+          total: total,
         });
       } else {
         return res

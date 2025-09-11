@@ -490,7 +490,9 @@ export const getVisitCounts = async (req, res) => {
           visitByQc: false,
         });
         console.log(visitedCount, notVisitedCount);
-        total = visitedCount + notVisitedCount;
+        total = await shopModel.countDocuments({
+          assignedQc: id,
+        });
         console.log(total);
         return res.status(200).json({
           message: "Assigned shops for QC fetched successfully",

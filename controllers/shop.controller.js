@@ -469,9 +469,9 @@ export const getVisitCounts = async (req, res) => {
           assignedTo: id,
           visit: false,
         });
-
+        console.log(visitedCount, notVisitedCount);
         total = visitedCount + notVisitedCount;
-
+        console.log(total);
         return res.status(200).json({
           message: "Visit counts for auditor fetched successfully",
           visited: visitedCount,

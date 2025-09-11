@@ -482,8 +482,7 @@ export const getVisitCounts = async (req, res) => {
         // QC flow → only assigned shops count (no visited filter)
         visitedCount = await shopModel.countDocuments({
           assignedQc: id,
-          visit: true,
-          // visitByQc: true,
+          visitByQc: true,
         });
 
         notVisitedCount = await shopModel.countDocuments({

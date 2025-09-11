@@ -494,7 +494,7 @@ export const getVisitCounts = async (req, res) => {
           message: "Assigned shops for QC fetched successfully",
           visited: visitedCount,
           notVisited: notVisitedCount,
-          total: total,
+          total,
         });
       } else {
         return res

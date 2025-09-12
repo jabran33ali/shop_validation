@@ -143,7 +143,7 @@ export const assignShops = async (req, res) => {
     let result;
 
     if (role === "auditor") {
-      // A shop can only have one auditor
+      // Check if already assigned to another auditor
       const alreadyAssigned = await shopModel.find({
         _id: { $in: shopIds },
         assignedTo: { $ne: null },
@@ -156,50 +156,51 @@ export const assignShops = async (req, res) => {
         });
       }
 
+      // Assign auditor
       result = await shopModel.updateMany(
         { _id: { $in: shopIds }, assignedTo: null },
         { $set: { assignedTo: userId } }
       );
     } else if (role === "qc") {
-      // A shop can only have one QC
-      const alreadyAssigned = await shopModel.find({
+      // Check if already assigned to another QC
+      const alreadyAssignedQc = await shopModel.find({
         _id: { $in: shopIds },
         assignedQc: { $ne: null },
       });
 
-      if (alreadyAssigned.length > 0) {
+      if (alreadyAssignedQc.length > 0) {
         return res.status(400).json({
           message: "Some shops are already assigned to another QC",
-          alreadyAssigned: alreadyAssigned.map((shop) => shop._id),
+          alreadyAssigned: alreadyAssignedQc.map((shop) => shop._id),
         });
       }
 
+      // Assign QC
       result = await shopModel.updateMany(
         { _id: { $in: shopIds }, assignedQc: null },
         { $set: { assignedQc: userId } }
       );
-    } else if (role === "salesperson") {
-      // A shop can only have one salesperson
-      const alreadyAssigned = await shopModel.find({
+    } else if (role === "saleperson") {
+      // Check if already assigned to another salesperson
+      const alreadyAssignedSales = await shopModel.find({
         _id: { $in: shopIds },
         assignedSalesperson: { $ne: null },
       });
 
-      if (alreadyAssigned.length > 0) {
+      if (alreadyAssignedSales.length > 0) {
         return res.status(400).json({
           message: "Some shops are already assigned to another salesperson",
-          alreadyAssigned: alreadyAssigned.map((shop) => shop._id),
+          alreadyAssigned: alreadyAssignedSales.map((shop) => shop._id),
         });
       }
 
+      // Assign salesperson
       result = await shopModel.updateMany(
         { _id: { $in: shopIds }, assignedSalesperson: null },
         { $set: { assignedSalesperson: userId } }
       );
     } else {
-      return res
-        .status(400)
-        .json({ message: "Role must be auditor, qc, or salesperson" });
+      return res.status(400).json({ message: "Role must be auditor, qc, or salesperson" });
     }
 
     res.status(200).json({
@@ -211,6 +212,7 @@ export const assignShops = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const getShopsByAuditor = async (req, res) => {
   try {
@@ -230,7 +232,10 @@ export const getShopsByAuditor = async (req, res) => {
       shops = await shopModel.find({ assignedTo: id });
     } else if (user.role === "qc") {
       shops = await shopModel.find({ assignedQc: id });
-    } else {
+    }else if( user.role==="saleperson"){
+      shops= await shopModel.findOne({assignedSalesperson:id})
+    } 
+    else {
       return res.status(400).json({ message: "User role not supported" });
     }
 
@@ -370,7 +375,14 @@ export const uploadVisitPictures = async (req, res) => {
           .status(403)
           .json({ message: "This shop is not assigned to you" });
       }
-    } else {
+    } else if (user.role === "saleperson") {
+      if (!shop.assignedSalesperson || shop.assignedSalesperson.toString() !== userId) {
+        return res
+          .status(403)
+          .json({ message: "This shop is not assigned to you" });
+      }
+    } 
+    else {
       return res.status(403).json({ message: "Unauthorized role" });
     }
 
@@ -486,21 +498,38 @@ export const getVisitCounts = async (req, res) => {
         });
 
         notVisitedCount = await shopModel.countDocuments({
-          assignedQc: id,
-          visitByQc: false,
+          assignedQc:id,
+          visitByQc:false,
         });
-        console.log(visitedCount, notVisitedCount);
-        total = await shopModel.countDocuments({
-          assignedQc: id,
-        });
-        console.log(total);
+        
+       total = visitedCount + notVisitedCount;
+        
         return res.status(200).json({
-          message: "Assigned shops for QC fetched successfully",
+          message: "Assigned shops for SC fetched sussefully",
           visited: visitedCount,
           notVisited: notVisitedCount,
           total,
         });
-      } else {
+      } else if (user.role === "saleperson") {
+        // saleperson flow → only assigned shops count (no visited filter)
+        visitedCount = await shopModel.countDocuments({
+          assignedSalesperson: id,
+          visitBySaleperson: true,
+        });
+
+        notVisitedCount = await shopModel.countDocuments({
+          assignedSalesperson: id,
+          visitBySaleperson: false,
+        });
+        
+       total = visitedCount + notVisitedCount;
+        return res.status(200).json({
+          message: "Assigned shops for Sales Person fetched successfully",
+          visited: visitedCount,
+          notVisited: notVisitedCount,
+          total,
+        });
+      }else {
         return res
           .status(400)
           .json({ message: "Role not supported for visit counts" });

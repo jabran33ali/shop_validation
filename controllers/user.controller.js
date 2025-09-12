@@ -141,7 +141,7 @@ export const updateUserById = async (req, res) => {
 // Get all users with role = salesperson
 export const getSalespersons = async (req, res) => {
   try {
-    const salespersons = await User.find({ role: "salesperson" });
+    const salespersons = await User.find({ role: "saleperson" });
 
     if (!salespersons.length) {
       return res.status(404).json({ message: "No salespersons found" });

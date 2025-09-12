@@ -134,3 +134,29 @@ export const updateUserById = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
+
+
+// Get all users with role = salesperson
+export const getSalespersons = async (req, res) => {
+  try {
+    const salespersons = await User.find({ role: "salesperson" });
+
+    if (!salespersons.length) {
+      return res.status(404).json({ message: "No salespersons found" });
+    }
+
+    return res.status(200).json({
+      message: "Salespersons fetched successfully",
+      count: salespersons.length,
+      data: salespersons,
+    });
+  } catch (error) {
+    console.error("Error fetching salespersons:", error);
+    return res.status(500).json({
+      message: "Error fetching salespersons",
+      error: error.message,
+    });
+  }
+};

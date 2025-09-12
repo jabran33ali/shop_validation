@@ -5,8 +5,9 @@ import {
   getAllAssignies,
   getAllUsers,
   updateUserById,
+  getSalespersons,
 } from "../controllers/user.controller.js";
-import { protect } from "../middlewares/auth.middleware.js";
+import { protect, verifyJWT } from "../middlewares/auth.middleware.js";
 import { allowRoles } from "../middlewares/role.middleware.js";
 import { getShopsByAuditor } from "../controllers/shop.controller.js";
 
@@ -37,5 +38,7 @@ router.put(
   allowRoles("admin", "manager", "supervisor", "executive"),
   updateUserById
 );
+
+router.get('/get-salepersons', verifyJWT, getSalespersons)
 
 export default router;

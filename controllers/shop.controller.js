@@ -233,7 +233,7 @@ export const getShopsByAuditor = async (req, res) => {
     } else if (user.role === "qc") {
       shops = await shopModel.find({ assignedQc: id });
     }else if( user.role==="saleperson"){
-      shops= await shopModel.findOne({assignedSalesperson:id})
+      shops= await shopModel.find({assignedSalesperson:id})
     } 
     else {
       return res.status(400).json({ message: "User role not supported" });
@@ -505,7 +505,7 @@ export const getVisitCounts = async (req, res) => {
        total = visitedCount + notVisitedCount;
         
         return res.status(200).json({
-          message: "Assigned shops for SC fetched sussefully",
+          message: "Assigned shops for QC fetched sussefully",
           visited: visitedCount,
           notVisited: notVisitedCount,
           total,

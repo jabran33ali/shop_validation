@@ -254,6 +254,8 @@ export const getShopsByAuditor = async (req, res) => {
       shops = await shopModel.find({ assignedQc: id });
     }else if( user.role==="saleperson"){
       shops= await shopModel.find({assignedSalesperson:id})
+    } else if( user.role==="manager"){
+      shops= await shopModel.find({assignedManagerId:id})
     } 
     else {
       return res.status(400).json({ message: "User role not supported" });

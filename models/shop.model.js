@@ -14,6 +14,10 @@ const shopSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User", // salesperson
     },
+    assignedManagerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     visit: {
       type: Boolean,
       default: false,

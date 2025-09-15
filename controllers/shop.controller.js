@@ -199,8 +199,28 @@ export const assignShops = async (req, res) => {
         { _id: { $in: shopIds }, assignedSalesperson: null },
         { $set: { assignedSalesperson: userId } }
       );
-    } else {
-      return res.status(400).json({ message: "Role must be auditor, qc, or salesperson" });
+    }else if (role === "manager") {
+      // Check if already assigned to another QC
+      const alreadyAssignedManager = await shopModel.find({
+        _id: { $in: shopIds },
+        assignedManagerId: { $ne: null },
+      });
+
+      if (alreadyAssignedManager.length > 0) {
+        return res.status(400).json({
+          message: "Some shops are already assigned to another Manager",
+          alreadyAssigned: alreadyAssignedManager.map((shop) => shop._id),
+        });
+      }
+
+      // Assign manager
+      result = await shopModel.updateMany(
+        { _id: { $in: shopIds }, assignedManagerId: null },
+        { $set: { assignedManagerId: userId } }
+      );
+    } 
+     else {
+      return res.status(400).json({ message: "Role must be auditor, qc, manager or salesperson" });
     }
 
     res.status(200).json({

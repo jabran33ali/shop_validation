@@ -16,11 +16,14 @@ import {
 } from "../controllers/shop.controller.js";
 
 import { allowRoles } from "../middlewares/role.middleware.js";
-import upload from "../middlewares/multer.js";
+// import { upload } from "../middlewares/multer.js";
+import { xlUpload } from "../middlewares/upload.js";
+
+
 
 const router = express.Router();
 
-router.post("/upload", verifyJWT, isAdmin, upload.single("file"), uploadShops);
+router.post("/upload", verifyJWT, isAdmin, xlUpload.single("file"), uploadShops);
 router.get("/get-shops", verifyJWT, getShops);
 router.get("/get-visited-shops", verifyJWT, getVisitedShops);
 router.get(
@@ -38,12 +41,12 @@ router.post(
 
 router.post("/start-audit-location", verifyJWT, recordStartAuditLocation);
 router.post("/photoclick-location", verifyJWT, recordPhotoCLickLocation);
-router.post(
-  "/visit",
-  verifyJWT,
-  upload.fields([{ name: "shopImage" }, { name: "shelfImage" }]),
-  uploadVisitPictures
-);
+// router.post(
+//   "/visit",
+//   verifyJWT,
+//   upload.fields([{ name: "shopImage" }, { name: "shelfImage" }]),
+//   uploadVisitPictures
+// );
 
 router.delete("/reset-visits", resetAllVisits);
 

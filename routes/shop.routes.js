@@ -16,10 +16,10 @@ import {
 } from "../controllers/shop.controller.js";
 
 import { allowRoles } from "../middlewares/role.middleware.js";
-// import { upload } from "../middlewares/multer.js";
+
 import { xlUpload } from "../middlewares/upload.js";
 
-
+import upload  from "../middlewares/multer.js";
 
 const router = express.Router();
 
@@ -41,12 +41,12 @@ router.post(
 
 router.post("/start-audit-location", verifyJWT, recordStartAuditLocation);
 router.post("/photoclick-location", verifyJWT, recordPhotoCLickLocation);
-// router.post(
-//   "/visit",
-//   verifyJWT,
-//   upload.fields([{ name: "shopImage" }, { name: "shelfImage" }]),
-//   uploadVisitPictures
-// );
+router.post(
+  "/visit",
+  verifyJWT,
+  upload.fields([{ name: "shopImage" }, { name: "shelfImage" }]),
+  uploadVisitPictures
+);
 
 router.delete("/reset-visits", resetAllVisits);
 

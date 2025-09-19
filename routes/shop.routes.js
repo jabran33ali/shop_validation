@@ -2,6 +2,7 @@
 import express from "express";
 import { isAdmin, verifyJWT } from "../middlewares/auth.middleware.js";
 import {
+  addShop,
   assignShops,
   getPendingAndVistedShops,
   getShopById,
@@ -19,11 +20,18 @@ import { allowRoles } from "../middlewares/role.middleware.js";
 
 import { xlUpload } from "../middlewares/upload.js";
 
-import upload  from "../middlewares/multer.js";
+import upload from "../middlewares/multer.js";
 
 const router = express.Router();
 
-router.post("/upload", verifyJWT, isAdmin, xlUpload.single("file"), uploadShops);
+router.post(
+  "/upload",
+  verifyJWT,
+  isAdmin,
+  xlUpload.single("file"),
+  uploadShops
+);
+router.post("/add-shop", verifyJWT, addShop);
 router.get("/get-shops", verifyJWT, getShops);
 router.get("/get-visited-shops", verifyJWT, getVisitedShops);
 router.get(

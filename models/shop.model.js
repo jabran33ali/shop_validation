@@ -74,6 +74,11 @@ const shopSchema = new mongoose.Schema(
     visitedAtBySalesperson: {
       type: Date,
     },
+
+    shop_name: { type: String },
+    shop_address: { type: String },
+    gps_e: { type: Number },
+    gps_n: { type: Number },
   },
   { strict: false, timestamps: true }
 );

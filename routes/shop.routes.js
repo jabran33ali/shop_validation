@@ -33,7 +33,7 @@ router.post(
   uploadShops
 );
 router.post("/add-shop", verifyJWT, addShop);
-router.put('/update-shop', verifyJWT, updateShop)
+router.put('/update-shop/:shopId', verifyJWT, updateShop)
 router.get("/get-shops", verifyJWT, getShops);
 router.get("/get-visited-shops", verifyJWT, getVisitedShops);
 router.get(

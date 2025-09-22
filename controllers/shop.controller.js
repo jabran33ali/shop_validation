@@ -67,6 +67,49 @@ export const addShop = async (req, res) => {
   }
 };
 
+
+
+export const updateShop = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const { userId, ...updateData } = req.body; // ✅ take all fields from body
+
+    if (!shopId || !userId) {
+      return res.status(400).json({ message: "shopId and userId are required" });
+    }
+
+    // ✅ Check user role
+    const user = await userModel.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.role !== "saleperson" && user.role !== "qc") {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to update shops" });
+    }
+
+    // ✅ Update shop with all provided fields
+    const updatedShop = await shopModel.findByIdAndUpdate(
+      shopId,
+      { $set: updateData },
+      { new: true, runValidators: true } // return updated shop & validate schema
+    );
+
+    if (!updatedShop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    res.status(200).json({
+      message: "Shop updated successfully",
+      shop: updatedShop,
+    });
+  } catch (error) {
+    console.error("Error updating shop:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
 export const getShops = async (req, res) => {
   try {
     // optional query param ?unassigned=true

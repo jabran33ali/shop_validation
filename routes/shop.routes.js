@@ -12,6 +12,7 @@ import {
   recordPhotoCLickLocation,
   recordStartAuditLocation,
   resetAllVisits,
+  updateShop,
   uploadShops,
   uploadVisitPictures,
 } from "../controllers/shop.controller.js";
@@ -32,6 +33,7 @@ router.post(
   uploadShops
 );
 router.post("/add-shop", verifyJWT, addShop);
+router.put('/update-shop', verifyJWT, updateShop)
 router.get("/get-shops", verifyJWT, getShops);
 router.get("/get-visited-shops", verifyJWT, getVisitedShops);
 router.get(

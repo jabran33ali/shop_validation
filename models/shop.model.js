@@ -75,6 +75,13 @@ const shopSchema = new mongoose.Schema(
       type: Date,
     },
 
+    // ✅ Track shop found/not found action
+    shopFound: {
+      status: { type: Boolean, default: null }, // true = found, false = not found
+      latitude: { type: Number },
+      longitude: { type: Number },
+      timestamp: { type: Date },
+    },
     shop_name: { type: String },
     shop_address: { type: String },
     gps_e: { type: Number },

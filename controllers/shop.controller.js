@@ -67,15 +67,15 @@ export const addShop = async (req, res) => {
   }
 };
 
-
-
 export const updateShop = async (req, res) => {
   try {
     const { shopId } = req.params;
     const { userId, ...updateData } = req.body; // ✅ take all fields from body
 
     if (!shopId || !userId) {
-      return res.status(400).json({ message: "shopId and userId are required" });
+      return res
+        .status(400)
+        .json({ message: "shopId and userId are required" });
     }
 
     // ✅ Check user role
@@ -108,7 +108,6 @@ export const updateShop = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 
 export const getShops = async (req, res) => {
   try {
@@ -346,46 +345,6 @@ export const getShopsByAuditor = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-// Auditor visit upload controller
-// export const uploadVisitPictures = async (req, res) => {
-//   try {
-//     const { shopId, auditorId } = req.body;
-
-//     if (!req.files || req.files.length === 0) {
-//       return res.status(400).json({ message: "No pictures uploaded" });
-//     }
-
-//     const imagePaths = req.files.map((file) => `/uploads/${file.filename}`);
-
-//     const shop = await shopModel.findById(shopId);
-
-//     if (!shop) {
-//       return res.status(404).json({ message: "Shop not found" });
-//     }
-
-//     if (shop.assignedTo.toString() !== auditorId) {
-//       return res
-//         .status(403)
-//         .json({ message: "This shop is not assigned to you" });
-//     }
-
-//     shop.visit = true;
-//     shop.visitImages.push(...imagePaths);
-//     shop.visitedBy = auditorId;
-//     shop.visitedAt = new Date();
-
-//     await shop.save();
-
-//     res.status(200).json({
-//       message: "Visit recorded successfully",
-//       shop,
-//     });
-//   } catch (error) {
-//     console.error("Error uploading visit pictures:", error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
 
 export const recordStartAuditLocation = async (req, res) => {
   try {
@@ -652,4 +611,43 @@ export const getVisitCounts = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-//
+
+export const markShopFound = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const { status, latitude, longitude } = req.body;
+
+    if (typeof status !== "boolean") {
+      return res
+        .status(400)
+        .json({ message: "status must be true (found) or false (not found)" });
+    }
+
+    const shop = await shopModel.findByIdAndUpdate(
+      shopId,
+      {
+        $set: {
+          shopFound: {
+            status,
+            latitude,
+            longitude,
+            timestamp: new Date(),
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    res.status(200).json({
+      message: `Shop marked as ${status ? "Found" : "Not Found"}`,
+      shop,
+    });
+  } catch (error) {
+    console.error("Error marking shop found:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

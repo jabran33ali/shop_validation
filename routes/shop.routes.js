@@ -9,6 +9,7 @@ import {
   getShops,
   getVisitCounts,
   getVisitedShops,
+  markShopFound,
   recordPhotoCLickLocation,
   recordStartAuditLocation,
   resetAllVisits,
@@ -33,7 +34,7 @@ router.post(
   uploadShops
 );
 router.post("/add-shop", verifyJWT, addShop);
-router.put('/update-shop/:shopId', verifyJWT, updateShop)
+router.put("/update-shop/:shopId", verifyJWT, updateShop);
 router.get("/get-shops", verifyJWT, getShops);
 router.get("/get-visited-shops", verifyJWT, getVisitedShops);
 router.get(
@@ -61,5 +62,7 @@ router.post(
 router.delete("/reset-visits", resetAllVisits);
 
 router.get("/get-visit-stats", getVisitCounts);
+
+router.put("/found/:shopId", verifyJWT, markShopFound);
 
 export default router;

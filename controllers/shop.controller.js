@@ -615,7 +615,7 @@ export const getVisitCounts = async (req, res) => {
 export const markShopFound = async (req, res) => {
   try {
     const { shopId } = req.params;
-    const { status, latitude, longitude } = req.body;
+    const { status, latitude, longitude, userId } = req.body;
 
     if (typeof status !== "boolean") {
       return res

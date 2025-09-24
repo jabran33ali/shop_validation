@@ -89,8 +89,11 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
     console.log('🔍 Start Audit Debug - visitLocation.startAudit:', JSON.stringify(visitLocation.startAudit, null, 2));
     
     if (visitLocation.startAudit && 
-        visitLocation.startAudit.latitude && 
-        visitLocation.startAudit.longitude) {
+        visitLocation.startAudit !== null &&
+        visitLocation.startAudit.latitude !== null && 
+        visitLocation.startAudit.latitude !== undefined &&
+        visitLocation.startAudit.longitude !== null && 
+        visitLocation.startAudit.longitude !== undefined) {
       startAuditDistance = calculateDistance(
         shopLat, 
         shopLon, 
@@ -107,8 +110,11 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
     console.log('🔍 Photo Click Debug - visitLocation.photoClick:', JSON.stringify(visitLocation.photoClick, null, 2));
     
     if (visitLocation.photoClick && 
-        visitLocation.photoClick.latitude && 
-        visitLocation.photoClick.longitude) {
+        visitLocation.photoClick !== null &&
+        visitLocation.photoClick.latitude !== null && 
+        visitLocation.photoClick.latitude !== undefined &&
+        visitLocation.photoClick.longitude !== null && 
+        visitLocation.photoClick.longitude !== undefined) {
       photoClickDistance = calculateDistance(
         shopLat, 
         shopLon, 
@@ -125,8 +131,11 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
     console.log('🔍 Proceed Click Debug - visitLocation.proceedClick:', JSON.stringify(visitLocation.proceedClick, null, 2));
     
     if (visitLocation.proceedClick && 
-        visitLocation.proceedClick.latitude && 
-        visitLocation.proceedClick.longitude) {
+        visitLocation.proceedClick !== null &&
+        visitLocation.proceedClick.latitude !== null && 
+        visitLocation.proceedClick.latitude !== undefined &&
+        visitLocation.proceedClick.longitude !== null && 
+        visitLocation.proceedClick.longitude !== undefined) {
       proceedClickDistance = calculateDistance(
         shopLat, 
         shopLon, 

@@ -363,6 +363,8 @@ export const recordStartAuditLocation = async (req, res) => {
           longitude,
           timestamp: new Date(),
         },
+        photoClick: null, // Initialize as null, will be set later
+        proceedClick: null, // Initialize as null, will be set later
       },
     });
 
@@ -389,6 +391,12 @@ export const recordPhotoCLickLocation = async (req, res) => {
 
     // Get last visitImage
     const lastVisit = shop.visitImages[shop.visitImages.length - 1];
+    
+    // Ensure visitLocation exists and initialize photoClick
+    if (!lastVisit.visitLocation) {
+      lastVisit.visitLocation = {};
+    }
+    
     lastVisit.visitLocation.photoClick = {
       latitude,
       longitude,
@@ -456,6 +464,12 @@ export const uploadVisitPictures = async (req, res) => {
     const lastVisit = shop.visitImages[shop.visitImages.length - 1];
     lastVisit.shopImage = req.files.shopImage[0].path; // Cloudinary secure_url
     lastVisit.shelfImage = req.files.shelfImage[0].path;
+    
+    // Ensure visitLocation exists and initialize proceedClick
+    if (!lastVisit.visitLocation) {
+      lastVisit.visitLocation = {};
+    }
+    
     lastVisit.visitLocation.proceedClick = {
       latitude: latitude ? Number(latitude) : null,
       longitude: longitude ? Number(longitude) : null,

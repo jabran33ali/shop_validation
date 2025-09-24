@@ -1,6 +1,7 @@
 import xlsx from "xlsx";
 import shopModel from "../models/shop.model.js";
 import userModel from "../models/user.model.js";
+import { analyzeImageForLays } from "../utils/aiDetection.js";
 
 export const uploadShops = async (req, res) => {
   try {
@@ -460,6 +461,38 @@ export const uploadVisitPictures = async (req, res) => {
       timestamp: new Date(),
     };
 
+    // 🤖 AI Detection for Lay's products
+    console.log('🤖 Starting AI detection for uploaded images...');
+    try {
+      // Analyze the shelf image for Lay's products
+      const aiResult = await analyzeImageForLays(lastVisit.shelfImage);
+      
+      // Store AI detection results
+      lastVisit.aiDetection = aiResult;
+      
+      console.log('✅ AI Detection completed:', {
+        laysDetected: aiResult.laysDetected,
+        laysCount: aiResult.laysCount,
+        confidence: aiResult.confidence,
+        detectionMethod: aiResult.detectionMethod
+      });
+    } catch (aiError) {
+      console.error('❌ AI Detection failed:', aiError);
+      // Set default AI detection result on error
+      lastVisit.aiDetection = {
+        laysDetected: false,
+        laysCount: 0,
+        confidence: 0,
+        detectionMethod: 'none',
+        logoDetections: [],
+        extractedText: '',
+        detectedObjects: [],
+        detectedLabels: [],
+        processedAt: new Date(),
+        error: aiError.message
+      };
+    }
+
     if (user.role === "auditor") {
       shop.visit = true;
       shop.visitedBy = userId;
@@ -482,6 +515,7 @@ export const uploadVisitPictures = async (req, res) => {
           ? "Audit visit completed successfully"
           : "QC visit completed successfully",
       data: lastVisit,
+      aiDetection: lastVisit.aiDetection,
     });
   } catch (error) {
     console.error("Error uploading visit pictures:", error);
@@ -661,6 +695,51 @@ export const markShopFound = async (req, res) => {
     });
   } catch (error) {
     console.error("Error marking shop found:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// 🤖 Get AI detection results for a specific shop
+export const getAIDetectionResults = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+
+    const shop = await shopModel.findById(shopId);
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    // Extract AI detection results from all visit images
+    const aiResults = shop.visitImages
+      .filter(visit => visit.aiDetection)
+      .map(visit => ({
+        visitId: visit._id,
+        shopImage: visit.shopImage,
+        shelfImage: visit.shelfImage,
+        aiDetection: visit.aiDetection,
+        visitDate: visit.visitLocation?.proceedClick?.timestamp || visit.visitLocation?.photoClick?.timestamp
+      }));
+
+    // Calculate summary statistics
+    const summary = {
+      totalVisits: shop.visitImages.length,
+      visitsWithAI: aiResults.length,
+      totalLaysDetected: aiResults.reduce((sum, result) => sum + (result.aiDetection.laysDetected ? result.aiDetection.laysCount : 0), 0),
+      averageConfidence: aiResults.length > 0 
+        ? aiResults.reduce((sum, result) => sum + result.aiDetection.confidence, 0) / aiResults.length 
+        : 0,
+      detectionMethods: [...new Set(aiResults.map(result => result.aiDetection.detectionMethod))],
+      lastDetection: aiResults.length > 0 ? aiResults[aiResults.length - 1].aiDetection.processedAt : null
+    };
+
+    res.status(200).json({
+      message: "AI detection results fetched successfully",
+      shopId,
+      summary,
+      results: aiResults
+    });
+  } catch (error) {
+    console.error("Error fetching AI detection results:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

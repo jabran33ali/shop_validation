@@ -51,6 +51,33 @@ const shopSchema = new mongoose.Schema(
             timestamp: { type: Date },
           },
         },
+        // AI Detection Results
+        aiDetection: {
+          laysDetected: { type: Boolean, default: false },
+          laysCount: { type: Number, default: 0 },
+          confidence: { type: Number, default: 0 },
+          detectionMethod: { type: String, enum: ['logo', 'text', 'object', 'none'], default: 'none' },
+          logoDetections: [{
+            description: { type: String },
+            score: { type: Number },
+            boundingPoly: {
+              vertices: [{
+                x: { type: Number },
+                y: { type: Number }
+              }]
+            }
+          }],
+          extractedText: { type: String },
+          detectedObjects: [{
+            name: { type: String },
+            score: { type: Number }
+          }],
+          detectedLabels: [{
+            description: { type: String },
+            score: { type: Number }
+          }],
+          processedAt: { type: Date, default: Date.now }
+        }
       },
     ],
     visitedBy: {

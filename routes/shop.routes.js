@@ -16,6 +16,7 @@ import {
   updateShop,
   uploadShops,
   uploadVisitPictures,
+  getAIDetectionResults,
 } from "../controllers/shop.controller.js";
 
 import { allowRoles } from "../middlewares/role.middleware.js";
@@ -62,5 +63,8 @@ router.delete("/reset-visits", resetAllVisits);
 router.get("/get-visit-stats", getVisitCounts);
 
 router.put("/found/:shopId", verifyJWT, markShopFound);
+
+// 🤖 AI Detection routes
+router.get("/ai-detection/:shopId", verifyJWT, getAIDetectionResults);
 
 export default router;

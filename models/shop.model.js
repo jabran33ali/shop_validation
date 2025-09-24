@@ -77,6 +77,25 @@ const shopSchema = new mongoose.Schema(
             score: { type: Number }
           }],
           processedAt: { type: Date, default: Date.now }
+        },
+        // GPS Validation Results
+        gpsValidation: {
+          isValid: { type: Boolean, default: false },
+          validationStatus: { type: String, enum: ['valid', 'invalid', 'partial', 'no_data'], default: 'no_data' },
+          startAuditDistance: { type: Number, default: null }, // Distance in meters
+          photoClickDistance: { type: Number, default: null }, // Distance in meters
+          proceedClickDistance: { type: Number, default: null }, // Distance in meters
+          shopCoordinates: {
+            latitude: { type: Number },
+            longitude: { type: Number }
+          },
+          validationDetails: {
+            startAuditValid: { type: Boolean, default: false },
+            photoClickValid: { type: Boolean, default: false },
+            proceedClickValid: { type: Boolean, default: false }
+          },
+          radiusThreshold: { type: Number, default: 30 }, // 30 meters
+          validatedAt: { type: Date, default: Date.now }
         }
       },
     ],

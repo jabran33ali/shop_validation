@@ -2,6 +2,7 @@ import xlsx from "xlsx";
 import shopModel from "../models/shop.model.js";
 import userModel from "../models/user.model.js";
 import { analyzeImageForLays } from "../utils/aiDetection.js";
+import { validateVisitGPS } from "../utils/gpsValidation.js";
 
 export const uploadShops = async (req, res) => {
   try {
@@ -493,6 +494,49 @@ export const uploadVisitPictures = async (req, res) => {
       };
     }
 
+    // 🗺️ GPS Validation for visit locations
+    console.log('🗺️ Starting GPS validation for visit locations...');
+    try {
+      // Get shop coordinates
+      const shopCoordinates = {
+        gps_n: shop.gps_n,
+        gps_e: shop.gps_e
+      };
+
+      // Validate GPS coordinates for this visit
+      const gpsValidationResult = validateVisitGPS(lastVisit.visitLocation, shopCoordinates, 30);
+      
+      // Store GPS validation results
+      lastVisit.gpsValidation = gpsValidationResult;
+      
+      console.log('✅ GPS Validation completed:', {
+        isValid: gpsValidationResult.isValid,
+        validationStatus: gpsValidationResult.validationStatus,
+        startAuditDistance: gpsValidationResult.startAuditDistance,
+        photoClickDistance: gpsValidationResult.photoClickDistance,
+        proceedClickDistance: gpsValidationResult.proceedClickDistance
+      });
+    } catch (gpsError) {
+      console.error('❌ GPS Validation failed:', gpsError);
+      // Set default GPS validation result on error
+      lastVisit.gpsValidation = {
+        isValid: false,
+        validationStatus: 'no_data',
+        error: gpsError.message,
+        shopCoordinates: null,
+        startAuditDistance: null,
+        photoClickDistance: null,
+        proceedClickDistance: null,
+        validationDetails: {
+          startAuditValid: false,
+          photoClickValid: false,
+          proceedClickValid: false
+        },
+        radiusThreshold: 30,
+        validatedAt: new Date()
+      };
+    }
+
     if (user.role === "auditor") {
       shop.visit = true;
       shop.visitedBy = userId;
@@ -516,6 +560,7 @@ export const uploadVisitPictures = async (req, res) => {
           : "QC visit completed successfully",
       data: lastVisit,
       aiDetection: lastVisit.aiDetection,
+      gpsValidation: lastVisit.gpsValidation,
     });
   } catch (error) {
     console.error("Error uploading visit pictures:", error);

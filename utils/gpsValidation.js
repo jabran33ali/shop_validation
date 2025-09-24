@@ -48,6 +48,9 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
     // Debug: Log input parameters
     console.log('🔍 GPS Validation Debug - Input visitLocation:', JSON.stringify(visitLocation, null, 2));
     console.log('🔍 GPS Validation Debug - Input shopCoordinates:', JSON.stringify(shopCoordinates, null, 2));
+    console.log('🔍 GPS Validation Debug - visitLocation.startAudit:', visitLocation.startAudit);
+    console.log('🔍 GPS Validation Debug - visitLocation.photoClick:', visitLocation.photoClick);
+    console.log('🔍 GPS Validation Debug - visitLocation.proceedClick:', visitLocation.proceedClick);
     
     // Check if shop coordinates are available
     if (!shopCoordinates || !shopCoordinates.gps_n || !shopCoordinates.gps_e) {
@@ -148,6 +151,11 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
     // Determine overall validation status
     const validCount = [startAuditValid, photoClickValid, proceedClickValid].filter(Boolean).length;
     const totalCount = [startAuditDistance, photoClickDistance, proceedClickDistance].filter(d => d !== null).length;
+    
+    // If no GPS data at all, check if at least proceedClick has coordinates
+    if (totalCount === 0 && proceedClickDistance !== null) {
+      console.log('🔍 Only proceedClick GPS data available, using that for validation');
+    }
 
     let validationStatus = 'no_data';
     let isValid = false;
@@ -165,7 +173,7 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
     }
 
     // Build final result
-    return {
+    const finalResult = {
       isValid,
       validationStatus,
       startAuditDistance,
@@ -178,6 +186,9 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
       },
       ...validationResult
     };
+
+    console.log('🔍 GPS Validation Debug - Final Result:', JSON.stringify(finalResult, null, 2));
+    return finalResult;
 
   } catch (error) {
     console.error('Error in GPS validation:', error);

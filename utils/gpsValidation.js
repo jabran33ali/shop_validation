@@ -53,7 +53,7 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
     console.log('🔍 GPS Validation Debug - visitLocation.proceedClick:', visitLocation.proceedClick);
     
     // Check if shop coordinates are available
-    if (!shopCoordinates || !shopCoordinates.gps_n || !shopCoordinates.gps_e) {
+    if (!shopCoordinates || shopCoordinates.gps_n === undefined || shopCoordinates.gps_n === null || shopCoordinates.gps_e === undefined || shopCoordinates.gps_e === null) {
       return {
         isValid: false,
         validationStatus: 'no_data',
@@ -74,6 +74,8 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
 
     const shopLat = shopCoordinates.gps_n;
     const shopLon = shopCoordinates.gps_e;
+    
+    console.log('🔍 Shop coordinates extracted:', { shopLat, shopLon });
     
     // Initialize validation result
     const validationResult = {
@@ -104,6 +106,14 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
         visitLocation.startAudit.longitude
       );
       startAuditValid = startAuditDistance <= radiusThreshold;
+      console.log('🔍 Start Audit calculation:', {
+        shopLat, shopLon,
+        visitLat: visitLocation.startAudit.latitude,
+        visitLon: visitLocation.startAudit.longitude,
+        distance: startAuditDistance,
+        valid: startAuditValid,
+        threshold: radiusThreshold
+      });
     }
 
     // Validate Photo Click location
@@ -125,6 +135,14 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
         visitLocation.photoClick.longitude
       );
       photoClickValid = photoClickDistance <= radiusThreshold;
+      console.log('🔍 Photo Click calculation:', {
+        shopLat, shopLon,
+        visitLat: visitLocation.photoClick.latitude,
+        visitLon: visitLocation.photoClick.longitude,
+        distance: photoClickDistance,
+        valid: photoClickValid,
+        threshold: radiusThreshold
+      });
     }
 
     // Validate Proceed Click location
@@ -146,6 +164,14 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
         visitLocation.proceedClick.longitude
       );
       proceedClickValid = proceedClickDistance <= radiusThreshold;
+      console.log('🔍 Proceed Click calculation:', {
+        shopLat, shopLon,
+        visitLat: visitLocation.proceedClick.latitude,
+        visitLon: visitLocation.proceedClick.longitude,
+        distance: proceedClickDistance,
+        valid: proceedClickValid,
+        threshold: radiusThreshold
+      });
     }
 
     // Determine overall validation status

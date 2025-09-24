@@ -623,27 +623,40 @@ export const markShopFound = async (req, res) => {
         .json({ message: "status must be true (found) or false (not found)" });
     }
 
-    const shop = await shopModel.findByIdAndUpdate(
-      shopId,
-      {
-        $set: {
-          shopFound: {
-            status,
-            latitude,
-            longitude,
-            timestamp: new Date(),
-          },
-        },
+    // Find user to check role
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Prepare update object
+    const updateData = {
+      shopFound: {
+        status,
+        latitude,
+        longitude,
+        timestamp: new Date(),
+        markedBy: user.role, // store who marked it
       },
-      { new: true }
-    );
+    };
+
+    // Based on role, mark visit flag
+    if (user.role === "saleperson") {
+      updateData.visitBySaleperson = true;
+    } else if (user.role === "qc") {
+      updateData.visitByQc = true;
+    } else if (user.role === "auditor") {
+      updateData.visit = true;
+    }
+
+    const shop = await shopModel.findByIdAndUpdate(shopId, { $set: updateData }, { new: true });
 
     if (!shop) {
       return res.status(404).json({ message: "Shop not found" });
     }
 
     res.status(200).json({
-      message: `Shop marked as ${status ? "Found" : "Not Found"}`,
+      message: `Shop marked as ${status ? "Found" : "Not Found"} by ${user.role}`,
       shop,
     });
   } catch (error) {

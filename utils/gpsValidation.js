@@ -45,6 +45,10 @@ function toRadians(degrees) {
  */
 export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold = 30) {
   try {
+    // Debug: Log input parameters
+    console.log('🔍 GPS Validation Debug - Input visitLocation:', JSON.stringify(visitLocation, null, 2));
+    console.log('🔍 GPS Validation Debug - Input shopCoordinates:', JSON.stringify(shopCoordinates, null, 2));
+    
     // Check if shop coordinates are available
     if (!shopCoordinates || !shopCoordinates.gps_n || !shopCoordinates.gps_e) {
       return {
@@ -82,6 +86,8 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
     let startAuditDistance = null;
     let startAuditValid = false;
     
+    console.log('🔍 Start Audit Debug - visitLocation.startAudit:', JSON.stringify(visitLocation.startAudit, null, 2));
+    
     if (visitLocation.startAudit && 
         visitLocation.startAudit.latitude && 
         visitLocation.startAudit.longitude) {
@@ -98,6 +104,8 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
     let photoClickDistance = null;
     let photoClickValid = false;
     
+    console.log('🔍 Photo Click Debug - visitLocation.photoClick:', JSON.stringify(visitLocation.photoClick, null, 2));
+    
     if (visitLocation.photoClick && 
         visitLocation.photoClick.latitude && 
         visitLocation.photoClick.longitude) {
@@ -113,6 +121,8 @@ export function validateVisitGPS(visitLocation, shopCoordinates, radiusThreshold
     // Validate Proceed Click location
     let proceedClickDistance = null;
     let proceedClickValid = false;
+    
+    console.log('🔍 Proceed Click Debug - visitLocation.proceedClick:', JSON.stringify(visitLocation.proceedClick, null, 2));
     
     if (visitLocation.proceedClick && 
         visitLocation.proceedClick.latitude && 

@@ -503,6 +503,11 @@ export const uploadVisitPictures = async (req, res) => {
         gps_e: shop.gps_e
       };
 
+      // Debug: Log the actual data being passed
+      console.log('🔍 DEBUG - Shop coordinates:', shopCoordinates);
+      console.log('🔍 DEBUG - Visit location data:', JSON.stringify(lastVisit.visitLocation, null, 2));
+      console.log('🔍 DEBUG - Last visit object keys:', Object.keys(lastVisit));
+
       // Validate GPS coordinates for this visit
       const gpsValidationResult = validateVisitGPS(lastVisit.visitLocation, shopCoordinates, 30);
       

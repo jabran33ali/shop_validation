@@ -28,8 +28,6 @@ const router = express.Router();
 
 router.post(
   "/upload",
-  verifyJWT,
-  isAdmin,
   xlUpload.single("file"),
   uploadShops
 );

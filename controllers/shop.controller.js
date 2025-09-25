@@ -807,3 +807,70 @@ export const getAIDetectionResults = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+export const saveGPSValidationResults = async (req, res) => {
+  const { shopId } = req.params;
+  const { gpsValidationResults } = req.body;
+  
+  try {
+    console.log('🗺️ Saving GPS validation results for shop:', shopId);
+    console.log('📊 GPS validation data:', JSON.stringify(gpsValidationResults, null, 2));
+    
+    const shop = await shopModel.findById(shopId);
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    if (!shop.visitImages || shop.visitImages.length === 0) {
+      return res.status(400).json({ message: "No visit images found for this shop" });
+    }
+
+    if (!gpsValidationResults || !Array.isArray(gpsValidationResults)) {
+      return res.status(400).json({ message: "Invalid GPS validation results data" });
+    }
+
+    // Update GPS validation results for each visit
+    let updatedCount = 0;
+    for (let i = 0; i < shop.visitImages.length && i < gpsValidationResults.length; i++) {
+      const visit = shop.visitImages[i];
+      const gpsResult = gpsValidationResults[i];
+      
+      if (gpsResult && gpsResult.calculatedGPSValidation) {
+        // Update the GPS validation data
+        visit.gpsValidation = {
+          isValid: gpsResult.calculatedGPSValidation.isValid,
+          validationStatus: gpsResult.calculatedGPSValidation.validationStatus,
+          startAuditDistance: gpsResult.calculatedGPSValidation.startAuditDistance,
+          photoClickDistance: gpsResult.calculatedGPSValidation.photoClickDistance,
+          shopCoordinates: gpsResult.calculatedGPSValidation.shopCoordinates,
+          validationDetails: gpsResult.calculatedGPSValidation.validationDetails,
+          radiusThreshold: gpsResult.calculatedGPSValidation.radiusThreshold || 30,
+          validatedAt: new Date()
+        };
+        updatedCount++;
+        
+        console.log(`✅ Updated GPS validation for visit ${i + 1}:`, {
+          isValid: visit.gpsValidation.isValid,
+          validationStatus: visit.gpsValidation.validationStatus,
+          startAuditDistance: visit.gpsValidation.startAuditDistance,
+          photoClickDistance: visit.gpsValidation.photoClickDistance
+        });
+      }
+    }
+
+    // Save the updated shop
+    await shop.save();
+    
+    console.log(`🎯 Successfully saved GPS validation results for ${updatedCount} visits in shop ${shopId}`);
+
+    res.status(200).json({
+      message: "GPS validation results saved successfully",
+      shopId,
+      updatedVisits: updatedCount,
+      totalVisits: shop.visitImages.length
+    });
+  } catch (error) {
+    console.error("Error saving GPS validation results:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

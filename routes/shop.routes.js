@@ -18,6 +18,7 @@ import {
   uploadVisitPictures,
   getAIDetectionResults,
   saveGPSValidationResults,
+  saveAIDetectionResults,
 } from "../controllers/shop.controller.js";
 
 import { allowRoles } from "../middlewares/role.middleware.js";
@@ -70,5 +71,8 @@ router.get("/ai-detection/:shopId", verifyJWT, getAIDetectionResults);
 
 // 🗺️ GPS Validation routes
 router.post("/save-gps-validation/:shopId", verifyJWT, saveGPSValidationResults);
+
+// 🤖 AI Detection routes
+router.post("/save-ai-detection/:shopId", verifyJWT, saveAIDetectionResults);
 
 export default router;

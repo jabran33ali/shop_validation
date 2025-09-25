@@ -874,3 +874,71 @@ export const saveGPSValidationResults = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+export const saveAIDetectionResults = async (req, res) => {
+  const { shopId } = req.params;
+  const { aiDetectionResults } = req.body;
+  
+  try {
+    console.log('🤖 Saving AI detection results for shop:', shopId);
+    console.log('📊 AI detection data:', JSON.stringify(aiDetectionResults, null, 2));
+    
+    const shop = await shopModel.findById(shopId);
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    if (!shop.visitImages || shop.visitImages.length === 0) {
+      return res.status(400).json({ message: "No visit images found for this shop" });
+    }
+
+    if (!aiDetectionResults || !Array.isArray(aiDetectionResults)) {
+      return res.status(400).json({ message: "Invalid AI detection results data" });
+    }
+
+    // Update AI detection results for each visit
+    let updatedCount = 0;
+    for (let i = 0; i < shop.visitImages.length && i < aiDetectionResults.length; i++) {
+      const visit = shop.visitImages[i];
+      const aiResult = aiDetectionResults[i];
+      
+      if (aiResult && aiResult.calculatedAIDetection) {
+        // Update the AI detection data
+        visit.aiDetection = {
+          laysDetected: aiResult.calculatedAIDetection.laysDetected,
+          laysCount: aiResult.calculatedAIDetection.laysCount,
+          confidence: aiResult.calculatedAIDetection.confidence,
+          detectionMethod: aiResult.calculatedAIDetection.detectionMethod,
+          logoDetections: aiResult.calculatedAIDetection.logoDetections || [],
+          extractedText: aiResult.calculatedAIDetection.extractedText || '',
+          detectedObjects: aiResult.calculatedAIDetection.detectedObjects || [],
+          detectedLabels: aiResult.calculatedAIDetection.detectedLabels || [],
+          processedAt: new Date()
+        };
+        updatedCount++;
+        
+        console.log(`✅ Updated AI detection for visit ${i + 1}:`, {
+          laysDetected: visit.aiDetection.laysDetected,
+          laysCount: visit.aiDetection.laysCount,
+          confidence: visit.aiDetection.confidence,
+          detectionMethod: visit.aiDetection.detectionMethod
+        });
+      }
+    }
+
+    // Save the updated shop
+    await shop.save();
+    
+    console.log(`🎯 Successfully saved AI detection results for ${updatedCount} visits in shop ${shopId}`);
+
+    res.status(200).json({
+      message: "AI detection results saved successfully",
+      shopId,
+      updatedVisits: updatedCount,
+      totalVisits: shop.visitImages.length
+    });
+  } catch (error) {
+    console.error("Error saving AI detection results:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

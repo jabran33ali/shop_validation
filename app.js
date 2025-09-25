@@ -17,6 +17,7 @@ const corsOptions = {
   origin: [
     "http://localhost:3000",
     "https://shop-validation-dashboard.vercel.app",
+    "https://shop-validation-dashboard-b5s7.vercel.app"
   ], // your frontend URL
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: [

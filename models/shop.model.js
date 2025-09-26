@@ -132,6 +132,10 @@ const shopSchema = new mongoose.Schema(
     shop_address: { type: String },
     gps_e: { type: Number },
     gps_n: { type: Number },
+    thirtyMeterRadius :{
+      type: Boolean,
+      default: true
+    }
   },
   { strict: false, timestamps: true }
 );

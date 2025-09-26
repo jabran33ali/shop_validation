@@ -19,6 +19,7 @@ import {
   getAIDetectionResults,
   saveGPSValidationResults,
   saveAIDetectionResults,
+  updateThirtyMeterRadius,
 } from "../controllers/shop.controller.js";
 
 import { allowRoles } from "../middlewares/role.middleware.js";
@@ -43,6 +44,8 @@ router.get(
 
   getPendingAndVistedShops
 );
+
+router.put('/enable-radius', verifyJWT, allowRoles("admin"), updateThirtyMeterRadius)
 router.get("/get-shop/:id", verifyJWT, getShopById);
 router.post(
   "/assign-shops",

@@ -111,6 +111,57 @@ export const updateShop = async (req, res) => {
   }
 };
 
+
+export const updateThirtyMeterRadius = async (req, res) => {
+  try {
+    const { shopIds, thirtyMeterRadius } = req.body;
+
+    if (typeof thirtyMeterRadius !== "boolean") {
+      return res
+        .status(400)
+        .json({ message: "thirtyMeterRadius must be true or false" });
+    }
+
+    // If only one shopId is provided
+    if (typeof shopIds === "string") {
+      const shop = await shopModel.findByIdAndUpdate(
+        shopIds,
+        { $set: { thirtyMeterRadius } },
+        { new: true }
+      );
+
+      if (!shop) {
+        return res.status(404).json({ message: "Shop not found" });
+      }
+
+      return res.status(200).json({
+        message: "thirtyMeterRadius updated for single shop",
+        shop,
+      });
+    }
+
+    // If multiple shopIds are provided
+    if (Array.isArray(shopIds)) {
+      const result = await shopModel.updateMany(
+        { _id: { $in: shopIds } },
+        { $set: { thirtyMeterRadius } }
+      );
+
+      return res.status(200).json({
+        message: "thirtyMeterRadius updated for multiple shops",
+        modifiedCount: result.modifiedCount,
+      });
+    }
+
+    res.status(400).json({
+      message: "shopIds must be either a string (single shopId) or an array",
+    });
+  } catch (error) {
+    console.error("Error updating thirtyMeterRadius:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 export const getShops = async (req, res) => {
   try {
     // optional query param ?unassigned=true

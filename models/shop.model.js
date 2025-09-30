@@ -5,10 +5,12 @@ const shopSchema = new mongoose.Schema(
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User", // linking to auditor
+      default: null,
     },
     assignedQc: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      default: null,
     },
     assignedSalesperson: {
       type: mongoose.Schema.Types.ObjectId,
@@ -56,47 +58,63 @@ const shopSchema = new mongoose.Schema(
           laysDetected: { type: Boolean, default: false },
           laysCount: { type: Number, default: 0 },
           confidence: { type: Number, default: 0 },
-          detectionMethod: { type: String, enum: ['logo', 'text', 'object', 'none'], default: 'none' },
-          logoDetections: [{
-            description: { type: String },
-            score: { type: Number },
-            boundingPoly: {
-              vertices: [{
-                x: { type: Number },
-                y: { type: Number }
-              }]
-            }
-          }],
+          detectionMethod: {
+            type: String,
+            enum: ["logo", "text", "object", "none"],
+            default: "none",
+          },
+          logoDetections: [
+            {
+              description: { type: String },
+              score: { type: Number },
+              boundingPoly: {
+                vertices: [
+                  {
+                    x: { type: Number },
+                    y: { type: Number },
+                  },
+                ],
+              },
+            },
+          ],
           extractedText: { type: String },
-          detectedObjects: [{
-            name: { type: String },
-            score: { type: Number }
-          }],
-          detectedLabels: [{
-            description: { type: String },
-            score: { type: Number }
-          }],
-          processedAt: { type: Date, default: Date.now }
+          detectedObjects: [
+            {
+              name: { type: String },
+              score: { type: Number },
+            },
+          ],
+          detectedLabels: [
+            {
+              description: { type: String },
+              score: { type: Number },
+            },
+          ],
+          processedAt: { type: Date, default: Date.now },
         },
         // GPS Validation Results
         gpsValidation: {
           isValid: { type: Boolean, default: false },
-          validationStatus: { type: String, enum: ['valid', 'invalid', 'partial', 'no_data'], default: 'no_data' },
+          validationStatus: {
+            type: String,
+            enum: ["valid", "invalid", "partial", "no_data"],
+            default: "no_data",
+          },
           startAuditDistance: { type: Number, default: null }, // Distance in meters
           photoClickDistance: { type: Number, default: null }, // Distance in meters
           proceedClickDistance: { type: Number, default: null }, // Distance in meters
           shopCoordinates: {
             latitude: { type: Number },
-            longitude: { type: Number }
+            longitude: { type: Number },
           },
           validationDetails: {
             startAuditValid: { type: Boolean, default: false },
             photoClickValid: { type: Boolean, default: false },
-            proceedClickValid: { type: Boolean, default: false }
+            proceedClickValid: { type: Boolean, default: false },
           },
           radiusThreshold: { type: Number, default: 30 }, // 30 meters
-          validatedAt: { type: Date, default: Date.now }
-        }
+          validatedAt: { type: Date, default: Date.now },
+        },
       },
     ],
     visitedBy: {
@@ -132,13 +150,17 @@ const shopSchema = new mongoose.Schema(
     shop_address: { type: String },
     gps_e: { type: Number },
     gps_n: { type: Number },
-    thirtyMeterRadius :{
+    thirtyMeterRadius: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
   { strict: false, timestamps: true }
 );
+
+shopSchema.index({ assignedTo: 1 });
+
+shopSchema.index({ assignedQc: 1 });
 
 const Shop = mongoose.model("Shop", shopSchema);
 export default Shop;

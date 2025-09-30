@@ -111,7 +111,6 @@ export const updateShop = async (req, res) => {
   }
 };
 
-
 export const updateThirtyMeterRadius = async (req, res) => {
   try {
     const { shopIds, thirtyMeterRadius } = req.body;
@@ -164,24 +163,37 @@ export const updateThirtyMeterRadius = async (req, res) => {
 
 export const getShops = async (req, res) => {
   try {
-    // optional query param ?unassigned=true
-    const { unassigned } = req.query;
+    const { unassigned, page = 1, limit = 10 } = req.query;
 
     let filter = {};
 
     if (unassigned === "true") {
       filter = {
-        $or: [
-          { assignedTo: { $exists: false } }, // key doesn't exist
-          { assignedTo: null }, // key exists but value is null
-        ],
+        $or: [{ assignedTo: { $exists: false } }, { assignedTo: null }],
       };
     }
 
-    const shops = await shopModel.find(filter);
+    // Convert page and limit to numbers
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    // Count total docs (for pagination metadata)
+    const totalShops = await shopModel.countDocuments(filter);
+
+    // Fetch shops with pagination
+    const shops = await shopModel
+      .find(filter)
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum);
 
     res.status(200).json({
       message: "Shops fetched successfully",
+      pagination: {
+        total: totalShops,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(totalShops / limitNum),
+      },
       count: shops.length,
       data: shops,
     });
@@ -442,12 +454,12 @@ export const recordPhotoCLickLocation = async (req, res) => {
 
     // Get last visitImage
     const lastVisit = shop.visitImages[shop.visitImages.length - 1];
-    
+
     // Ensure visitLocation exists and initialize photoClick
     if (!lastVisit.visitLocation) {
       lastVisit.visitLocation = {};
     }
-    
+
     lastVisit.visitLocation.photoClick = {
       latitude,
       longitude,
@@ -515,12 +527,12 @@ export const uploadVisitPictures = async (req, res) => {
     const lastVisit = shop.visitImages[shop.visitImages.length - 1];
     lastVisit.shopImage = req.files.shopImage[0].path; // Cloudinary secure_url
     lastVisit.shelfImage = req.files.shelfImage[0].path;
-    
+
     // Ensure visitLocation exists and initialize proceedClick
     if (!lastVisit.visitLocation) {
       lastVisit.visitLocation = {};
     }
-    
+
     lastVisit.visitLocation.proceedClick = {
       latitude: latitude ? Number(latitude) : null,
       longitude: longitude ? Number(longitude) : null,
@@ -528,70 +540,77 @@ export const uploadVisitPictures = async (req, res) => {
     };
 
     // 🤖 AI Detection for Lay's products
-    console.log('🤖 Starting AI detection for uploaded images...');
+    console.log("🤖 Starting AI detection for uploaded images...");
     try {
       // Analyze the shelf image for Lay's products
       const aiResult = await analyzeImageForLays(lastVisit.shelfImage);
-      
+
       // Store AI detection results
       lastVisit.aiDetection = aiResult;
-      
-      console.log('✅ AI Detection completed:', {
+
+      console.log("✅ AI Detection completed:", {
         laysDetected: aiResult.laysDetected,
         laysCount: aiResult.laysCount,
         confidence: aiResult.confidence,
-        detectionMethod: aiResult.detectionMethod
+        detectionMethod: aiResult.detectionMethod,
       });
     } catch (aiError) {
-      console.error('❌ AI Detection failed:', aiError);
+      console.error("❌ AI Detection failed:", aiError);
       // Set default AI detection result on error
       lastVisit.aiDetection = {
         laysDetected: false,
         laysCount: 0,
         confidence: 0,
-        detectionMethod: 'none',
+        detectionMethod: "none",
         logoDetections: [],
-        extractedText: '',
+        extractedText: "",
         detectedObjects: [],
         detectedLabels: [],
         processedAt: new Date(),
-        error: aiError.message
+        error: aiError.message,
       };
     }
 
     // 🗺️ GPS Validation for visit locations
-    console.log('🗺️ Starting GPS validation for visit locations...');
+    console.log("🗺️ Starting GPS validation for visit locations...");
     try {
       // Get shop coordinates
       const shopCoordinates = {
         gps_n: shop.gps_n,
-        gps_e: shop.gps_e
+        gps_e: shop.gps_e,
       };
 
       // Debug: Log the actual data being passed
-      console.log('🔍 DEBUG - Shop coordinates:', shopCoordinates);
-      console.log('🔍 DEBUG - Visit location data:', JSON.stringify(lastVisit.visitLocation, null, 2));
-      console.log('🔍 DEBUG - Last visit object keys:', Object.keys(lastVisit));
+      console.log("🔍 DEBUG - Shop coordinates:", shopCoordinates);
+      console.log(
+        "🔍 DEBUG - Visit location data:",
+        JSON.stringify(lastVisit.visitLocation, null, 2)
+      );
+      console.log("🔍 DEBUG - Last visit object keys:", Object.keys(lastVisit));
 
       // Validate GPS coordinates for this visit
-      const gpsValidationResult = validateVisitGPS(lastVisit.visitLocation, shopCoordinates, 30);
-      
+      const gpsValidationResult = validateVisitGPS(
+        lastVisit.visitLocation,
+        shopCoordinates,
+        30
+      );
+
       // Store GPS validation results
       lastVisit.gpsValidation = gpsValidationResult;
-      
-      console.log('✅ GPS Validation completed:', {
+
+      console.log("✅ GPS Validation completed:", {
         isValid: gpsValidationResult.isValid,
         validationStatus: gpsValidationResult.validationStatus,
         startAuditDistance: gpsValidationResult.startAuditDistance,
         photoClickDistance: gpsValidationResult.photoClickDistance,
-        proceedClickDistance: gpsValidationResult.proceedClickDistance
+        proceedClickDistance: gpsValidationResult.proceedClickDistance,
       });
     } catch (gpsError) {
-      console.error('❌ GPS Validation failed:', gpsError);
+      console.error("❌ GPS Validation failed:", gpsError);
       // Set default GPS validation result on error
       lastVisit.gpsValidation = {
         isValid: false,
-        validationStatus: 'no_data',
+        validationStatus: "no_data",
         error: gpsError.message,
         shopCoordinates: null,
         startAuditDistance: null,
@@ -600,10 +619,10 @@ export const uploadVisitPictures = async (req, res) => {
         validationDetails: {
           startAuditValid: false,
           photoClickValid: false,
-          proceedClickValid: false
+          proceedClickValid: false,
         },
         radiusThreshold: 30,
-        validatedAt: new Date()
+        validatedAt: new Date(),
       };
     }
 
@@ -798,19 +817,87 @@ export const markShopFound = async (req, res) => {
       updateData.visit = true;
     }
 
-    const shop = await shopModel.findByIdAndUpdate(shopId, { $set: updateData }, { new: true });
+    const shop = await shopModel.findByIdAndUpdate(
+      shopId,
+      { $set: updateData },
+      { new: true }
+    );
 
     if (!shop) {
       return res.status(404).json({ message: "Shop not found" });
     }
 
     res.status(200).json({
-      message: `Shop marked as ${status ? "Found" : "Not Found"} by ${user.role}`,
+      message: `Shop marked as ${status ? "Found" : "Not Found"} by ${
+        user.role
+      }`,
       shop,
     });
   } catch (error) {
     console.error("Error marking shop found:", error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const updateShopsFromExcel = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // Read Excel file
+    const workbook = xlsx.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    let jsonData = xlsx.utils.sheet_to_json(sheet); // ✅ use let
+
+    if (!jsonData.length) {
+      return res.status(400).json({ message: "Excel file is empty" });
+    }
+
+    // ✅ Sanitize keys (remove dots/spaces)
+    jsonData = jsonData.map((row) => {
+      const cleaned = {};
+      Object.keys(row).forEach((key) => {
+        const safeKey = key.replace(/\./g, "_").trim(); // replace "." with "_"
+        cleaned[safeKey] = row[key];
+      });
+      return cleaned;
+    });
+
+    // ✅ Bulk update operations
+    const bulkOps = jsonData.map((shop) => {
+      // Build filter dynamically
+      let filter = {};
+      if (shop.shop_name) filter.shop_name = shop.shop_name;
+      if (shop.shop_address) filter.shop_address = shop.shop_address;
+      if (shop.district) filter.district = shop.district;
+      if (shop.city) filter.city = shop.city;
+      if (shop.area) filter.area = shop.area;
+      if (shop.channel_type) filter.channel_type = shop.channel_type;
+
+      return {
+        updateOne: {
+          filter,
+          update: { $set: shop },
+          upsert: true, // insert if not found
+        },
+      };
+    });
+
+    const result = await shopModel.bulkWrite(bulkOps);
+
+    res.status(200).json({
+      message: "Shops updated successfully",
+      matched: result.matchedCount,
+      modified: result.modifiedCount,
+      upserted: result.upsertedCount,
+    });
+  } catch (error) {
+    console.error("Error updating shops:", error);
+    res
+      .status(500)
+      .json({ message: "Error updating shops", error: error.message });
   }
 };
 
@@ -826,32 +913,50 @@ export const getAIDetectionResults = async (req, res) => {
 
     // Extract AI detection results from all visit images
     const aiResults = shop.visitImages
-      .filter(visit => visit.aiDetection)
-      .map(visit => ({
+      .filter((visit) => visit.aiDetection)
+      .map((visit) => ({
         visitId: visit._id,
         shopImage: visit.shopImage,
         shelfImage: visit.shelfImage,
         aiDetection: visit.aiDetection,
-        visitDate: visit.visitLocation?.proceedClick?.timestamp || visit.visitLocation?.photoClick?.timestamp
+        visitDate:
+          visit.visitLocation?.proceedClick?.timestamp ||
+          visit.visitLocation?.photoClick?.timestamp,
       }));
 
     // Calculate summary statistics
     const summary = {
       totalVisits: shop.visitImages.length,
       visitsWithAI: aiResults.length,
-      totalLaysDetected: aiResults.reduce((sum, result) => sum + (result.aiDetection.laysDetected ? result.aiDetection.laysCount : 0), 0),
-      averageConfidence: aiResults.length > 0 
-        ? aiResults.reduce((sum, result) => sum + result.aiDetection.confidence, 0) / aiResults.length 
-        : 0,
-      detectionMethods: [...new Set(aiResults.map(result => result.aiDetection.detectionMethod))],
-      lastDetection: aiResults.length > 0 ? aiResults[aiResults.length - 1].aiDetection.processedAt : null
+      totalLaysDetected: aiResults.reduce(
+        (sum, result) =>
+          sum +
+          (result.aiDetection.laysDetected ? result.aiDetection.laysCount : 0),
+        0
+      ),
+      averageConfidence:
+        aiResults.length > 0
+          ? aiResults.reduce(
+              (sum, result) => sum + result.aiDetection.confidence,
+              0
+            ) / aiResults.length
+          : 0,
+      detectionMethods: [
+        ...new Set(
+          aiResults.map((result) => result.aiDetection.detectionMethod)
+        ),
+      ],
+      lastDetection:
+        aiResults.length > 0
+          ? aiResults[aiResults.length - 1].aiDetection.processedAt
+          : null,
     };
 
     res.status(200).json({
       message: "AI detection results fetched successfully",
       shopId,
       summary,
-      results: aiResults
+      results: aiResults,
     });
   } catch (error) {
     console.error("Error fetching AI detection results:", error);
@@ -862,63 +967,80 @@ export const getAIDetectionResults = async (req, res) => {
 export const saveGPSValidationResults = async (req, res) => {
   const { shopId } = req.params;
   const { gpsValidationResults } = req.body;
-  
+
   try {
-    console.log('🗺️ Saving GPS validation results for shop:', shopId);
-    console.log('📊 GPS validation data:', JSON.stringify(gpsValidationResults, null, 2));
-    
+    console.log("🗺️ Saving GPS validation results for shop:", shopId);
+    console.log(
+      "📊 GPS validation data:",
+      JSON.stringify(gpsValidationResults, null, 2)
+    );
+
     const shop = await shopModel.findById(shopId);
     if (!shop) {
       return res.status(404).json({ message: "Shop not found" });
     }
 
     if (!shop.visitImages || shop.visitImages.length === 0) {
-      return res.status(400).json({ message: "No visit images found for this shop" });
+      return res
+        .status(400)
+        .json({ message: "No visit images found for this shop" });
     }
 
     if (!gpsValidationResults || !Array.isArray(gpsValidationResults)) {
-      return res.status(400).json({ message: "Invalid GPS validation results data" });
+      return res
+        .status(400)
+        .json({ message: "Invalid GPS validation results data" });
     }
 
     // Update GPS validation results for each visit
     let updatedCount = 0;
-    for (let i = 0; i < shop.visitImages.length && i < gpsValidationResults.length; i++) {
+    for (
+      let i = 0;
+      i < shop.visitImages.length && i < gpsValidationResults.length;
+      i++
+    ) {
       const visit = shop.visitImages[i];
       const gpsResult = gpsValidationResults[i];
-      
+
       if (gpsResult && gpsResult.calculatedGPSValidation) {
         // Update the GPS validation data
         visit.gpsValidation = {
           isValid: gpsResult.calculatedGPSValidation.isValid,
           validationStatus: gpsResult.calculatedGPSValidation.validationStatus,
-          startAuditDistance: gpsResult.calculatedGPSValidation.startAuditDistance,
-          photoClickDistance: gpsResult.calculatedGPSValidation.photoClickDistance,
+          startAuditDistance:
+            gpsResult.calculatedGPSValidation.startAuditDistance,
+          photoClickDistance:
+            gpsResult.calculatedGPSValidation.photoClickDistance,
           shopCoordinates: gpsResult.calculatedGPSValidation.shopCoordinates,
-          validationDetails: gpsResult.calculatedGPSValidation.validationDetails,
-          radiusThreshold: gpsResult.calculatedGPSValidation.radiusThreshold || 30,
-          validatedAt: new Date()
+          validationDetails:
+            gpsResult.calculatedGPSValidation.validationDetails,
+          radiusThreshold:
+            gpsResult.calculatedGPSValidation.radiusThreshold || 30,
+          validatedAt: new Date(),
         };
         updatedCount++;
-        
+
         console.log(`✅ Updated GPS validation for visit ${i + 1}:`, {
           isValid: visit.gpsValidation.isValid,
           validationStatus: visit.gpsValidation.validationStatus,
           startAuditDistance: visit.gpsValidation.startAuditDistance,
-          photoClickDistance: visit.gpsValidation.photoClickDistance
+          photoClickDistance: visit.gpsValidation.photoClickDistance,
         });
       }
     }
 
     // Save the updated shop
     await shop.save();
-    
-    console.log(`🎯 Successfully saved GPS validation results for ${updatedCount} visits in shop ${shopId}`);
+
+    console.log(
+      `🎯 Successfully saved GPS validation results for ${updatedCount} visits in shop ${shopId}`
+    );
 
     res.status(200).json({
       message: "GPS validation results saved successfully",
       shopId,
       updatedVisits: updatedCount,
-      totalVisits: shop.visitImages.length
+      totalVisits: shop.visitImages.length,
     });
   } catch (error) {
     console.error("Error saving GPS validation results:", error);
@@ -929,30 +1051,41 @@ export const saveGPSValidationResults = async (req, res) => {
 export const saveAIDetectionResults = async (req, res) => {
   const { shopId } = req.params;
   const { aiDetectionResults } = req.body;
-  
+
   try {
-    console.log('🤖 Saving AI detection results for shop:', shopId);
-    console.log('📊 AI detection data:', JSON.stringify(aiDetectionResults, null, 2));
-    
+    console.log("🤖 Saving AI detection results for shop:", shopId);
+    console.log(
+      "📊 AI detection data:",
+      JSON.stringify(aiDetectionResults, null, 2)
+    );
+
     const shop = await shopModel.findById(shopId);
     if (!shop) {
       return res.status(404).json({ message: "Shop not found" });
     }
 
     if (!shop.visitImages || shop.visitImages.length === 0) {
-      return res.status(400).json({ message: "No visit images found for this shop" });
+      return res
+        .status(400)
+        .json({ message: "No visit images found for this shop" });
     }
 
     if (!aiDetectionResults || !Array.isArray(aiDetectionResults)) {
-      return res.status(400).json({ message: "Invalid AI detection results data" });
+      return res
+        .status(400)
+        .json({ message: "Invalid AI detection results data" });
     }
 
     // Update AI detection results for each visit
     let updatedCount = 0;
-    for (let i = 0; i < shop.visitImages.length && i < aiDetectionResults.length; i++) {
+    for (
+      let i = 0;
+      i < shop.visitImages.length && i < aiDetectionResults.length;
+      i++
+    ) {
       const visit = shop.visitImages[i];
       const aiResult = aiDetectionResults[i];
-      
+
       if (aiResult && aiResult.calculatedAIDetection) {
         // Update the AI detection data
         visit.aiDetection = {
@@ -961,32 +1094,34 @@ export const saveAIDetectionResults = async (req, res) => {
           confidence: aiResult.calculatedAIDetection.confidence,
           detectionMethod: aiResult.calculatedAIDetection.detectionMethod,
           logoDetections: aiResult.calculatedAIDetection.logoDetections || [],
-          extractedText: aiResult.calculatedAIDetection.extractedText || '',
+          extractedText: aiResult.calculatedAIDetection.extractedText || "",
           detectedObjects: aiResult.calculatedAIDetection.detectedObjects || [],
           detectedLabels: aiResult.calculatedAIDetection.detectedLabels || [],
-          processedAt: new Date()
+          processedAt: new Date(),
         };
         updatedCount++;
-        
+
         console.log(`✅ Updated AI detection for visit ${i + 1}:`, {
           laysDetected: visit.aiDetection.laysDetected,
           laysCount: visit.aiDetection.laysCount,
           confidence: visit.aiDetection.confidence,
-          detectionMethod: visit.aiDetection.detectionMethod
+          detectionMethod: visit.aiDetection.detectionMethod,
         });
       }
     }
 
     // Save the updated shop
     await shop.save();
-    
-    console.log(`🎯 Successfully saved AI detection results for ${updatedCount} visits in shop ${shopId}`);
+
+    console.log(
+      `🎯 Successfully saved AI detection results for ${updatedCount} visits in shop ${shopId}`
+    );
 
     res.status(200).json({
       message: "AI detection results saved successfully",
       shopId,
       updatedVisits: updatedCount,
-      totalVisits: shop.visitImages.length
+      totalVisits: shop.visitImages.length,
     });
   } catch (error) {
     console.error("Error saving AI detection results:", error);

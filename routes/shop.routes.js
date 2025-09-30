@@ -20,6 +20,7 @@ import {
   saveGPSValidationResults,
   saveAIDetectionResults,
   updateThirtyMeterRadius,
+  updateShopsFromExcel,
 } from "../controllers/shop.controller.js";
 
 import { allowRoles } from "../middlewares/role.middleware.js";
@@ -30,11 +31,14 @@ import upload from "../middlewares/multer.js";
 
 const router = express.Router();
 
+router.post("/upload", xlUpload.single("file"), uploadShops);
+
 router.post(
-  "/upload",
+  "/update-from-excel",
   xlUpload.single("file"),
-  uploadShops
+  updateShopsFromExcel
 );
+
 router.post("/add-shop", verifyJWT, addShop);
 router.put("/update-shop/:shopId", verifyJWT, updateShop);
 router.get("/get-shops", verifyJWT, getShops);
@@ -45,7 +49,12 @@ router.get(
   getPendingAndVistedShops
 );
 
-router.put('/enable-radius', verifyJWT, allowRoles("admin"), updateThirtyMeterRadius)
+router.put(
+  "/enable-radius",
+  verifyJWT,
+  allowRoles("admin"),
+  updateThirtyMeterRadius
+);
 router.get("/get-shop/:id", verifyJWT, getShopById);
 router.post(
   "/assign-shops",
@@ -73,7 +82,11 @@ router.put("/found/:shopId", verifyJWT, markShopFound);
 router.get("/ai-detection/:shopId", verifyJWT, getAIDetectionResults);
 
 // 🗺️ GPS Validation routes
-router.post("/save-gps-validation/:shopId", verifyJWT, saveGPSValidationResults);
+router.post(
+  "/save-gps-validation/:shopId",
+  verifyJWT,
+  saveGPSValidationResults
+);
 
 // 🤖 AI Detection routes
 router.post("/save-ai-detection/:shopId", verifyJWT, saveAIDetectionResults);

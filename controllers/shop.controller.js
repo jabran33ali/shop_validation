@@ -899,7 +899,7 @@ export const updateShopsFromExcel = async (req, res) => {
       .status(500)
       .json({ message: "Error updating shops", error: error.message });
   }
-};
+}; /// delete this api later
 
 // 🤖 Get AI detection results for a specific shop
 export const getAIDetectionResults = async (req, res) => {

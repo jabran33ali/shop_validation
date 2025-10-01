@@ -224,13 +224,34 @@ export const getVisitedShops = async (req, res) => {
 };
 
 export const getPendingAndVistedShops = async (req, res) => {
-  const { visit } = req.query;
+  const { visit, visitByQc, visitBySaleperson, userId } = req.query;
 
   try {
-    const shops = await shopModel.find({
-      visit,
-      assignedTo: { $exists: true, $ne: null }, // must exist and not be null
-    });
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    let shops = [];
+
+    if (user.role === "auditor") {
+      shops = await shopModel.find({
+        visit,
+        assignedTo: { $exists: true, $ne: null },
+      });
+    } else if (user.role === "qc") {
+      shops = await shopModel.find({
+        visitByQc,
+        assignedQc: { $exists: true, $ne: null },
+      });
+    } else if (user.role === "saleperson") {
+      shops = await shopModel.find({
+        visitBySaleperson,
+        assignedSalesperson: { $exists: true, $ne: null },
+      });
+    } else {
+      return res.status(400).json({ message: "User role not supported" });
+    }
 
     res.status(200).json({
       message: "Shops fetched successfully",

@@ -253,6 +253,11 @@ export const getPendingAndVistedShops = async (req, res) => {
     } else if (user.role === "admin") {
       shops = await shopModel.find({
         visit,
+        $or: [
+          { assignedTo: { $exists: true, $ne: null } }, // auditor
+          { assignedQc: { $exists: true, $ne: null } }, // qc
+          { assignedSalesperson: { $exists: true, $ne: null } }, // saleperson
+        ],
       });
     }
 

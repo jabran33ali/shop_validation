@@ -33,7 +33,7 @@ export const uploadShops = async (req, res) => {
       .status(500)
       .json({ message: "Error uploading shops", error: error.message });
   }
-};
+}; // delete this api later
 
 export const addShop = async (req, res) => {
   try {
@@ -710,7 +710,7 @@ export const resetAllVisits = async (req, res) => {
     console.error("Error resetting visits:", error);
     res.status(500).json({ message: "Server error" });
   }
-};
+}; // delete this api later
 
 export const getVisitCounts = async (req, res) => {
   try {
@@ -929,6 +929,8 @@ export const updateShopsFromExcel = async (req, res) => {
       .json({ message: "Error updating shops", error: error.message });
   }
 }; /// delete this api later
+
+////////////////////////////////////////////////////////  * AI APIs * ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 🤖 Get AI detection results for a specific shop
 export const getAIDetectionResults = async (req, res) => {

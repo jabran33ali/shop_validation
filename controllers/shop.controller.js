@@ -250,6 +250,10 @@ export const getPendingAndVistedShops = async (req, res) => {
         visitBySaleperson,
         assignedSalesperson: userId,
       });
+    } else if (user.role === "admin") {
+      shops = await shopModel.find({
+        visit,
+      });
     }
 
     res.status(200).json({

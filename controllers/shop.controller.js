@@ -250,8 +250,6 @@ export const getPendingAndVistedShops = async (req, res) => {
         visitBySaleperson,
         assignedSalesperson: userId,
       });
-    } else {
-      return res.status(400).json({ message: "User role not supported" });
     }
 
     res.status(200).json({

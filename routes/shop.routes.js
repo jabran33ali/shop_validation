@@ -45,7 +45,7 @@ router.get("/get-shops", verifyJWT, getShops);
 router.get("/get-visited-shops", verifyJWT, getVisitedShops);
 router.get(
   "/get-pending-and-visted-shops",
-
+  verifyJWT,
   getPendingAndVistedShops
 );
 

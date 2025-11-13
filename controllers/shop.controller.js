@@ -173,16 +173,14 @@ export const getShops = async (req, res) => {
       };
     }
 
-    // Convert page and limit to numbers
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
 
-    // Count total docs (for pagination metadata)
     const totalShops = await shopModel.countDocuments(filter);
 
-    // Fetch shops with pagination
     const shops = await shopModel
       .find(filter)
+      .sort({ createdAt: -1 }) // 👈 sort latest first
       .skip((pageNum - 1) * limitNum)
       .limit(limitNum);
 

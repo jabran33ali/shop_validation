@@ -161,26 +161,75 @@ export const updateThirtyMeterRadius = async (req, res) => {
   }
 };
 
+// export const getShops = async (req, res) => {
+//   try {
+//     const { unassigned, page = 1, limit = 10 } = req.query;
+
+//     let filter = {};
+
+//     if (unassigned === "true") {
+//       filter = {
+//         $or: [{ assignedTo: { $exists: false } }, { assignedTo: null }],
+//       };
+//     }
+
+//     const pageNum = parseInt(page, 10);
+//     const limitNum = parseInt(limit, 10);
+
+//     const totalShops = await shopModel.countDocuments(filter);
+
+//     const shops = await shopModel
+//       .find(filter)
+//       .sort({ createdAt: -1 }) // 👈 sort latest first
+//       .skip((pageNum - 1) * limitNum)
+//       .limit(limitNum);
+
+//     res.status(200).json({
+//       message: "Shops fetched successfully",
+//       pagination: {
+//         total: totalShops,
+//         page: pageNum,
+//         limit: limitNum,
+//         totalPages: Math.ceil(totalShops / limitNum),
+//       },
+//       count: shops.length,
+//       data: shops,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching shops:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Error fetching shops", error: error.message });
+//   }
+// };
+
 export const getShops = async (req, res) => {
   try {
-    const { unassigned, page = 1, limit = 10 } = req.query;
+    const { unassigned, shop_name, page = 1, limit = 10 } = req.query;
 
     let filter = {};
 
+    // 🔍 Optional filter: only unassigned
     if (unassigned === "true") {
-      filter = {
-        $or: [{ assignedTo: { $exists: false } }, { assignedTo: null }],
-      };
+      filter.$or = [{ assignedTo: { $exists: false } }, { assignedTo: null }];
     }
 
+    // 🔍 Optional filter: shop_name search (case-insensitive)
+    if (shop_name) {
+      filter.shop_name = { $regex: shop_name, $options: "i" };
+    }
+
+    // Pagination numbers
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
 
+    // Count with filters
     const totalShops = await shopModel.countDocuments(filter);
 
+    // Fetch shops with filters + pagination + sorting
     const shops = await shopModel
       .find(filter)
-      .sort({ createdAt: -1 }) // 👈 sort latest first
+      .sort({ createdAt: -1 })
       .skip((pageNum - 1) * limitNum)
       .limit(limitNum);
 
@@ -197,9 +246,10 @@ export const getShops = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching shops:", error);
-    res
-      .status(500)
-      .json({ message: "Error fetching shops", error: error.message });
+    res.status(500).json({
+      message: "Error fetching shops",
+      error: error.message,
+    });
   }
 };
 
@@ -1155,5 +1205,61 @@ export const saveAIDetectionResults = async (req, res) => {
   } catch (error) {
     console.error("Error saving AI detection results:", error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+/////delete them later
+//
+// PREVIEW latest N shops
+export const previewLatestShops = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 100;
+
+    const shops = await shopModel.find({}).sort({ createdAt: -1 }).limit(limit);
+
+    return res.status(200).json({
+      message: "Preview of shops to be deleted",
+      count: shops.length,
+      data: shops,
+    });
+  } catch (error) {
+    console.error("Preview error:", error);
+    return res.status(500).json({
+      message: "Error previewing shops",
+      error: error.message,
+    });
+  }
+};
+
+// DELETE latest N shops
+export const deleteLatestShops = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 100;
+
+    // 1. Fetch shops first
+    const shopsToDelete = await shopModel
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    if (shopsToDelete.length === 0) {
+      return res.status(404).json({ message: "No shops found to delete" });
+    }
+
+    // 2. Delete using IDs
+    await shopModel.deleteMany({
+      _id: { $in: shopsToDelete.map((s) => s._id) },
+    });
+
+    return res.status(200).json({
+      message: "Latest shops deleted successfully",
+      deletedCount: shopsToDelete.length,
+    });
+  } catch (error) {
+    console.error("Delete error:", error);
+    return res.status(500).json({
+      message: "Error deleting shops",
+      error: error.message,
+    });
   }
 };

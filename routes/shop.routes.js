@@ -21,6 +21,8 @@ import {
   saveAIDetectionResults,
   updateThirtyMeterRadius,
   updateShopsFromExcel,
+  previewLatestShops,
+  deleteLatestShops,
 } from "../controllers/shop.controller.js";
 
 import { allowRoles } from "../middlewares/role.middleware.js";
@@ -90,5 +92,9 @@ router.post(
 
 // 🤖 AI Detection routes
 router.post("/save-ai-detection/:shopId", verifyJWT, saveAIDetectionResults);
+
+/// delete later
+router.get("/delete-preview", previewLatestShops); // safe preview
+router.delete("/delete-latest", deleteLatestShops);
 
 export default router;

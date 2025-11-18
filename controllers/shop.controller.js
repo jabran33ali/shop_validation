@@ -216,7 +216,7 @@ export const getShops = async (req, res) => {
 
     // 🔍 Optional filter: shop_name search (case-insensitive)
     if (shop_name) {
-      filter.shop_name = { $regex: shop_name };
+      filter.shop_name = { $regex: shop_name, $options: "i" };
     }
 
     // Pagination numbers
